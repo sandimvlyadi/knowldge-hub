@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Master\Project;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreMasterProjectRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class StoreMasterProjectRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null;
     }
 
     /**
@@ -22,8 +23,18 @@ class StoreMasterProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ref_id' => ['required', 'string', 'max:255', 'unique:App\Models\Master\MasterProject,ref_id'],
-            'key' => ['required', 'string', 'max:16', 'unique:App\Models\Master\MasterProject,key'],
+            'ref_id' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('App\Models\Master\MasterProject', 'ref_id')->whereNull('deleted_at'),
+            ],
+            'key' => [
+                'required',
+                'string',
+                'max:16',
+                Rule::unique('App\Models\Master\MasterProject', 'key')->whereNull('deleted_at'),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'avatar' => ['required', 'url'],
             'archived' => ['required', 'boolean'],

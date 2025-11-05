@@ -5,7 +5,9 @@ import { MasterProject } from '@/types/master/project';
 import { ColumnDef } from '@tanstack/react-table';
 import { EditIcon, SquareArrowOutUpRightIcon } from 'lucide-react';
 
-export const columns: ColumnDef<MasterProject>[] = [
+export const createColumns = (
+    onEdit: (project: MasterProject) => void,
+): ColumnDef<MasterProject>[] => [
     {
         accessorKey: 'name',
         header: 'Name',
@@ -94,6 +96,7 @@ export const columns: ColumnDef<MasterProject>[] = [
                     variant="outline"
                     size="icon"
                     className="cursor-pointer"
+                    onClick={() => onEdit(project)}
                 >
                     <EditIcon />
                 </Button>

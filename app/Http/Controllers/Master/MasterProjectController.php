@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Project\StoreMasterProjectRequest;
 use App\Http\Requests\Master\Project\UpdateMasterProjectRequest;
 use App\Models\Master\MasterProject;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -47,15 +48,39 @@ class MasterProjectController extends Controller
      */
     public function create()
     {
-        return Inertia::render('master/project/partials/archived-filter');
+        return Inertia::render('master/project/create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMasterProjectRequest $request)
+    public function store(StoreMasterProjectRequest $request): JsonResponse
     {
-        //
+        // Check if there's a soft-deleted record with same ref_id or key
+        $existingByRefId = MasterProject::withTrashed()->where('ref_id', $request->ref_id)->first();
+        $existingByKey = MasterProject::withTrashed()->where('key', $request->key)->first();
+
+        // If soft-deleted record exists, restore and update it
+        if ($existingByRefId && $existingByRefId->trashed()) {
+            $existingByRefId->restore();
+            $existingByRefId->deleted_by = null; // Reset deleted_by
+            $existingByRefId->update($request->validated());
+
+            return response()->json($existingByRefId, 200);
+        }
+
+        if ($existingByKey && $existingByKey->trashed()) {
+            $existingByKey->restore();
+            $existingByKey->deleted_by = null; // Reset deleted_by
+            $existingByKey->update($request->validated());
+
+            return response()->json($existingByKey, 200);
+        }
+
+        // Otherwise create new record
+        $record = MasterProject::create($request->validated());
+
+        return response()->json($record, 201);
     }
 
     /**
@@ -77,16 +102,20 @@ class MasterProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMasterProjectRequest $request, MasterProject $masterProject)
+    public function update(UpdateMasterProjectRequest $request, MasterProject $record): JsonResponse
     {
-        //
+        $record->update($request->validated());
+
+        return response()->json($record, 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(MasterProject $masterProject)
+    public function destroy(MasterProject $record)
     {
-        //
+        $record->delete();
+
+        return response()->json(null, 204);
     }
 }

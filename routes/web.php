@@ -27,5 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ])->names('master.projects')->withTrashed();
 });
 
+require __DIR__.'/externals.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

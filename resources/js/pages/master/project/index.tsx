@@ -4,10 +4,12 @@ import master from '@/routes/master';
 import { PaginatedResponse, type BreadcrumbItem } from '@/types';
 import { MasterProject as DataResponse } from '@/types/master/project';
 import { Head } from '@inertiajs/react';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { useCallback, useEffect, useState } from 'react';
-import { columns } from './partials/columns';
+import { useCallback, useState } from 'react';
+import { createColumns } from './partials/columns';
 import Filters from './partials/filters';
+import Form from './partials/form';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -29,50 +31,43 @@ interface Props {
     data: PaginatedResponse<DataResponse>;
 }
 
-async function getData(
-    page: number = 1,
-    perPage: number = 10,
-    filters: FilterParams = {},
-): Promise<PaginatedResponse<DataResponse>> {
-    const params: any = {
-        page,
-        per_page: perPage,
-    };
+function useMasterProjectsData(
+    page: number,
+    perPage: number,
+    filters: FilterParams,
+) {
+    return useQuery({
+        queryKey: ['master-projects', page, perPage, filters],
+        queryFn: async () => {
+            const params: any = {
+                page,
+                per_page: perPage,
+            };
 
-    if (filters.query) {
-        params.query = filters.query;
-    }
-    if (filters.archived !== undefined) {
-        params.archived = filters.archived;
-    }
+            if (filters.query) {
+                params.query = filters.query;
+            }
+            if (filters.archived !== undefined) {
+                params.archived = filters.archived;
+            }
 
-    const response = await axios.get(master.projects.data.url(), {
-        params,
-        withCredentials: true,
+            const response = await axios.get<PaginatedResponse<DataResponse>>(
+                master.projects.data.url(),
+                {
+                    params,
+                    withCredentials: true,
+                },
+            );
+
+            return response.data;
+        },
     });
-
-    return response.data;
 }
 
 export default function MasterProject(props: Props) {
-    const [data, setData] = useState<PaginatedResponse<DataResponse>>(
-        props.data || {
-            data: [],
-            total: 0,
-            current_page: 1,
-            per_page: 10,
-            from: 1,
-            to: 0,
-            last_page: 1,
-            first_page_url: '',
-            last_page_url: '',
-            next_page_url: null,
-            prev_page_url: null,
-            path: '',
-            links: [],
-        },
-    );
-    const [loading, setLoading] = useState(true);
+    const [state, setState] = useState<'add' | 'edit'>('add');
+    const [record, setRecord] = useState<DataResponse | null>(null);
+    const [openForm, setOpenForm] = useState(false);
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: 10,
@@ -82,28 +77,11 @@ export default function MasterProject(props: Props) {
         archived: undefined,
     });
 
-    const fetchData = useCallback(
-        async (
-            page: number,
-            pageSize: number,
-            currentFilters: FilterParams,
-        ) => {
-            setLoading(true);
-            try {
-                const result = await getData(page, pageSize, currentFilters);
-                setData(result);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setLoading(false);
-            }
-        },
-        [],
+    const { data, isLoading, isFetching } = useMasterProjectsData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filters,
     );
-
-    useEffect(() => {
-        fetchData(pagination.pageIndex + 1, pagination.pageSize, filters);
-    }, [fetchData, pagination.pageIndex, pagination.pageSize, filters]);
 
     const handlePageChange = useCallback((pageIndex: number) => {
         setPagination((prev) => ({ ...prev, pageIndex }));
@@ -119,18 +97,32 @@ export default function MasterProject(props: Props) {
                 ...prev,
                 [filterType]: values,
             }));
-            // Reset to first page when filters change
+
             setPagination((prev) => ({ ...prev, pageIndex: 0 }));
         },
         [],
     );
 
     const tableData: PaginatedData<DataResponse> = {
-        data: data?.data || [],
-        total: data?.total || 0,
+        data: data?.data ?? [],
+        total: data?.total ?? 0,
         startAt: data?.from ? data.from - 1 : 0,
-        maxResults: data?.per_page || 10,
+        maxResults: data?.per_page ?? pagination.pageSize,
     };
+
+    const onAdd = () => {
+        setState('add');
+        setRecord(null);
+        setOpenForm(true);
+    };
+
+    const handleEdit = (record: DataResponse) => {
+        setState('edit');
+        setRecord(record);
+        setOpenForm(true);
+    };
+
+    const columns = createColumns(handleEdit);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -139,15 +131,22 @@ export default function MasterProject(props: Props) {
                 <Filters
                     filters={filters}
                     onFilterChange={handleFilterChange}
+                    onAdd={onAdd}
                 />
                 <DataTable
                     columns={columns}
                     data={tableData}
-                    loading={loading}
+                    loading={isLoading || isFetching}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                 />
             </div>
+            <Form
+                state={state}
+                record={record}
+                open={openForm}
+                setOpen={setOpenForm}
+            />
         </AppLayout>
     );
 }
