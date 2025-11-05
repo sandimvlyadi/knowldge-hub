@@ -1,64 +1,29 @@
-import {
-    ComboboxOption,
-    FormCombobox,
-    FormInput,
-    FormTextarea,
-} from '@/components/form';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Sheet,
-    SheetClose,
-    SheetContent,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
-import external from '@/routes/external';
-import { Project as ProjectOption } from '@/types/external';
-import axios from 'axios';
-import { useCallback, useEffect, useState } from 'react';
-import * as z from 'zod';
-
+import { ProjectAvatar } from '@/components/avatar/project-avatar';
+import { FormCombobox, FormInput, FormTextarea } from '@/components/form';
+import { FormSheet } from '@/components/form/form-sheet';
 import {
     Field,
     FieldError,
     FieldGroup,
     FieldLabel,
 } from '@/components/ui/field';
-import { Spinner } from '@/components/ui/spinner';
+import { useMasterForm } from '@/hooks/use-master-form';
+import { useOptions } from '@/hooks/use-options';
+import external from '@/routes/external';
 import master from '@/routes/master';
+import { Project as ProjectOption } from '@/types/external';
 import { MasterProject as DataResponse } from '@/types/master/project';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import * as z from 'zod';
 
 interface Props {
-    state?: string;
+    state?: 'add' | 'edit';
     record?: DataResponse | null;
     open: boolean;
     setOpen: (open: boolean) => void;
 }
-
-async function getOptions(): Promise<ProjectOption[]> {
-    const response = await axios.get(external.getOptions.url(), {
-        withCredentials: true,
-        params: {
-            type: 'project',
-        },
-    });
-
-    return response.data;
-}
-
-const ItemIcon = ({ item }: { item: ProjectOption }) => (
-    <Avatar className="h-6 w-6">
-        <AvatarImage src={item.avatarUrls['48x48']} alt={item.name} />
-        <AvatarFallback>{item.key}</AvatarFallback>
-    </Avatar>
-);
 
 const schema = z.object({
     id: z.string().optional(),
@@ -71,14 +36,12 @@ const schema = z.object({
     description: z.string().min(1, 'Description is required.'),
 });
 
-export default function MasterProjectForm(props: Props) {
-    const { state = 'add', record = null, open, setOpen } = props;
-    const queryClient = useQueryClient();
-    const [loading, setLoading] = useState(false);
-    const [loadingOptions, setLoadingOptions] = useState(false);
-    const [options, setOptions] = useState<ComboboxOption[]>([]);
-    const [projectsData, setProjectsData] = useState<ProjectOption[]>([]);
-
+export default function MasterProjectForm({
+    state = 'add',
+    record = null,
+    open,
+    setOpen,
+}: Props) {
     const form = useForm<z.infer<typeof schema>>({
         resolver: zodResolver(schema),
         defaultValues: {
@@ -93,31 +56,34 @@ export default function MasterProjectForm(props: Props) {
         },
     });
 
-    const fetchData = useCallback(async () => {
-        try {
-            setLoadingOptions(true);
-            const result = await getOptions();
-            setProjectsData(result);
+    const {
+        options,
+        data: projectsData,
+        loading: loadingOptions,
+    } = useOptions<ProjectOption>({
+        url: external.getOptions.url(),
+        params: { type: 'project' },
+        mapToOption: (item) => ({
+            label: item.name,
+            value: item.id.toString(),
+            icon: () => (
+                <ProjectAvatar
+                    avatar={item.avatarUrls['48x48']}
+                    keyName={item.key}
+                    size="sm"
+                />
+            ),
+            disabled: item.exist,
+        }),
+    });
 
-            setOptions(
-                result.map((item) => ({
-                    label: item.name,
-                    value: item.id.toString(),
-                    icon: ({ className }: { className?: string }) => (
-                        <ItemIcon item={item} />
-                    ),
-                    disabled: item.exist,
-                })),
-            );
-            setLoadingOptions(false);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    const { loading, handleSubmit, handleDelete } = useMasterForm({
+        queryKey: ['master-projects'],
+        storePath: master.projects.store.url(),
+        updatePath: (id) => master.projects.update.url(id),
+        deletePath: (id) => master.projects.destroy.url(id),
+        entityName: 'Project',
+    });
 
     useEffect(() => {
         if (state === 'edit' && record) {
@@ -168,315 +134,173 @@ export default function MasterProjectForm(props: Props) {
     };
 
     const onSubmit = async (data: z.infer<typeof schema>) => {
-        setLoading(true);
-
-        const request =
-            state === 'add'
-                ? axios.post(master.projects.store.url(), data, {
-                      withCredentials: true,
-                  })
-                : axios.put(
-                      master.projects.update.url(parseInt(data.id!)),
-                      data,
-                      {
-                          withCredentials: true,
-                      },
-                  );
-
-        await request
-            .then(() => {
-                setOpen(false);
-                queryClient.invalidateQueries({
-                    queryKey: ['master-projects'],
-                });
-                toast.success(
-                    `Project ${state === 'add' ? 'added' : 'updated'} successfully!`,
-                );
-            })
-            .catch((error) => {
-                const code = error?.code || 'UNKNOWN_ERROR';
-                const message =
-                    `${error?.message}. (${code})` ||
-                    `Failed to ${state === 'add' ? 'add' : 'update'} project. (${code})`;
-                toast.error(message);
-
-                const errs = error?.response?.data?.errors;
-                if (errs) {
-                    Object.keys(errs).forEach((field: string) => {
-                        form.setError(field as keyof z.infer<typeof schema>, {
-                            type: 'server',
-                            message: errs[field][0],
-                        });
-                    });
-                }
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        const success = await handleSubmit(data, state, form);
+        if (success) setOpen(false);
     };
 
-    const handleSave = () => {
-        form.handleSubmit(onSubmit)();
-    };
-
-    const handleOpenChange = (isOpen: boolean) => {
-        if (!isOpen) {
-            form.reset();
-        }
-        setOpen(isOpen);
-    };
-
-    const handleDelete = async () => {
-        setLoading(true);
-
-        await axios
-            .delete(
-                master.projects.destroy.url(parseInt(form.getValues('id')!)),
-                {
-                    withCredentials: true,
-                },
-            )
-            .then(() => {
-                setOpen(false);
-                queryClient.invalidateQueries({
-                    queryKey: ['master-projects'],
-                });
-                toast.success('Project deleted successfully!');
-            })
-            .catch((error) => {
-                const code = error?.code || 'UNKNOWN_ERROR';
-                const message =
-                    `${error?.message}. (${code})` ||
-                    'Failed to delete project.';
-
-                toast.error(message);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+    const onDelete = async () => {
+        const success = await handleDelete(parseInt(form.getValues('id')!));
+        if (success) setOpen(false);
     };
 
     return (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-            <SheetContent className="w-full md:w-2/3 lg:w-1/2 xl:w-2/5">
-                <SheetHeader className="shadow-lg">
-                    <SheetTitle>
-                        {state === 'add' ? 'Add' : 'Edit'} Project
-                    </SheetTitle>
-                </SheetHeader>
-                <form
-                    id="form-master-project"
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="grid gap-6 overflow-auto p-4"
-                >
-                    <FieldGroup>
-                        <Controller
-                            name="ref_id"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field
-                                    data-invalid={fieldState.invalid}
-                                    className="gap-1"
-                                >
-                                    <FieldLabel htmlFor="ref_id">
-                                        Project
-                                    </FieldLabel>
-                                    <FormCombobox
-                                        id="ref_id"
-                                        placeholder="Select Project"
-                                        searchPlaceholder="Search projects..."
-                                        aria-invalid={fieldState.invalid}
-                                        options={options}
-                                        isLoading={loadingOptions}
-                                        value={field.value}
-                                        onChange={(value) => {
-                                            field.onChange(value);
-                                            handleProjectChange(value);
-                                        }}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                    <FieldGroup>
-                        <Controller
-                            name="key"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field
-                                    data-invalid={fieldState.invalid}
-                                    className="gap-1"
-                                >
-                                    <FieldLabel htmlFor="key">Key</FieldLabel>
-                                    <FormInput
-                                        {...field}
-                                        id="key"
-                                        type="text"
-                                        readOnly
-                                        autoComplete="off"
-                                        aria-invalid={fieldState.invalid}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                    <div className="grid">
-                        <div className="flex flex-col items-center justify-center gap-1">
-                            <Avatar
-                                className={`h-16 w-16 border shadow ${form.watch('avatar') ? '' : 'hidden'}`}
+        <FormSheet
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) form.reset();
+                setOpen(isOpen);
+            }}
+            title={`${state === 'add' ? 'Add' : 'Edit'} Project`}
+            onSave={form.handleSubmit(onSubmit)}
+            onDelete={state === 'edit' ? onDelete : undefined}
+            loading={loading}
+            state={state}
+        >
+            <form id="form-master-project" className="contents">
+                <FieldGroup>
+                    <Controller
+                        name="ref_id"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field
+                                data-invalid={fieldState.invalid}
+                                className="gap-1"
                             >
-                                <AvatarImage
-                                    src={form.watch('avatar')}
-                                    alt="Project Avatar"
+                                <FieldLabel htmlFor="ref_id">
+                                    Project
+                                </FieldLabel>
+                                <FormCombobox
+                                    id="ref_id"
+                                    placeholder="Select Project"
+                                    searchPlaceholder="Search projects..."
+                                    aria-invalid={fieldState.invalid}
+                                    options={options}
+                                    isLoading={loadingOptions}
+                                    value={field.value}
+                                    onChange={(value) => {
+                                        field.onChange(value);
+                                        handleProjectChange(value);
+                                    }}
                                 />
-                                <AvatarFallback>
-                                    {form.watch('key') || 'N/A'}
-                                </AvatarFallback>
-                            </Avatar>
-                            <Badge
-                                className={
-                                    form.watch('archived') === undefined
-                                        ? 'hidden'
-                                        : form.watch('archived')
-                                          ? 'bg-red-600'
-                                          : 'bg-green-600'
-                                }
-                            >
-                                {form.watch('archived') ? 'Archived' : 'Active'}
-                            </Badge>
-                        </div>
-                    </div>
-                    <FieldGroup>
-                        <Controller
-                            name="name"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field
-                                    data-invalid={fieldState.invalid}
-                                    className="gap-1"
-                                >
-                                    <FieldLabel htmlFor="name">Name</FieldLabel>
-                                    <FormInput
-                                        {...field}
-                                        id="name"
-                                        type="text"
-                                        autoComplete="off"
-                                        aria-invalid={fieldState.invalid}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                    <FieldGroup>
-                        <Controller
-                            name="url"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field
-                                    data-invalid={fieldState.invalid}
-                                    className="gap-1"
-                                >
-                                    <FieldLabel htmlFor="url">URL</FieldLabel>
-                                    <FormInput
-                                        {...field}
-                                        id="url"
-                                        type="text"
-                                        autoComplete="off"
-                                        aria-invalid={fieldState.invalid}
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                    <FieldGroup>
-                        <Controller
-                            name="description"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field
-                                    data-invalid={fieldState.invalid}
-                                    className="gap-1"
-                                >
-                                    <FieldLabel htmlFor="description">
-                                        Description
-                                    </FieldLabel>
-                                    <FormTextarea
-                                        {...field}
-                                        id="description"
-                                        rows={4}
-                                        autoComplete="off"
-                                        aria-invalid={fieldState.invalid}
-                                        className="resize-none"
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError
-                                            errors={[fieldState.error]}
-                                        />
-                                    )}
-                                </Field>
-                            )}
-                        />
-                    </FieldGroup>
-                </form>
-                <SheetFooter className="border-t-2">
-                    <Button
-                        type="button"
-                        className="cursor-pointer bg-teal-600 hover:bg-teal-700"
-                        onClick={handleSave}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <>
-                                <Spinner /> Saving...
-                            </>
-                        ) : (
-                            'Save'
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
                         )}
-                    </Button>
-                    {state === 'edit' && (
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            className="cursor-pointer"
-                            onClick={handleDelete}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <Spinner /> Deleting...
-                                </>
-                            ) : (
-                                'Delete'
-                            )}
-                        </Button>
-                    )}
-                    <SheetClose asChild>
-                        <Button variant="outline" className="cursor-pointer">
-                            Cancel
-                        </Button>
-                    </SheetClose>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
+                    />
+                </FieldGroup>
+
+                <FieldGroup>
+                    <Controller
+                        name="key"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field
+                                data-invalid={fieldState.invalid}
+                                className="gap-1"
+                            >
+                                <FieldLabel htmlFor="key">Key</FieldLabel>
+                                <FormInput
+                                    {...field}
+                                    id="key"
+                                    type="text"
+                                    readOnly
+                                    autoComplete="off"
+                                    aria-invalid={fieldState.invalid}
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                </FieldGroup>
+
+                <ProjectAvatar
+                    avatar={form.watch('avatar')}
+                    keyName={form.watch('key')}
+                    archived={form.watch('archived')}
+                    size="lg"
+                />
+
+                <FieldGroup>
+                    <Controller
+                        name="name"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field
+                                data-invalid={fieldState.invalid}
+                                className="gap-1"
+                            >
+                                <FieldLabel htmlFor="name">Name</FieldLabel>
+                                <FormInput
+                                    {...field}
+                                    id="name"
+                                    type="text"
+                                    autoComplete="off"
+                                    aria-invalid={fieldState.invalid}
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                </FieldGroup>
+
+                <FieldGroup>
+                    <Controller
+                        name="url"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field
+                                data-invalid={fieldState.invalid}
+                                className="gap-1"
+                            >
+                                <FieldLabel htmlFor="url">URL</FieldLabel>
+                                <FormInput
+                                    {...field}
+                                    id="url"
+                                    type="text"
+                                    autoComplete="off"
+                                    aria-invalid={fieldState.invalid}
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                </FieldGroup>
+
+                <FieldGroup>
+                    <Controller
+                        name="description"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field
+                                data-invalid={fieldState.invalid}
+                                className="gap-1"
+                            >
+                                <FieldLabel htmlFor="description">
+                                    Description
+                                </FieldLabel>
+                                <FormTextarea
+                                    {...field}
+                                    id="description"
+                                    rows={4}
+                                    autoComplete="off"
+                                    aria-invalid={fieldState.invalid}
+                                    className="resize-none"
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                </FieldGroup>
+            </form>
+        </FormSheet>
     );
 }
