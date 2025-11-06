@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Master\MasterIssueType;
+use App\Models\Master\MasterPriority;
 use App\Models\Master\MasterProject;
+use App\Models\Master\MasterStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Storage;
@@ -31,31 +34,31 @@ class ExternalController extends Controller
                 }, $data);
                 break;
             case 'issueType':
-                // $excludes = MasterProject::pluck('ref_id')->toArray();
-                // $data = Storage::json('apache/issuetype.json');
-                // $data = array_map(function ($item) use ($excludes) {
-                //     $item['exist'] = in_array($item['id'], $excludes);
+                $excludes = MasterIssueType::pluck('ref_id')->toArray();
+                $data = Storage::json('apache/issuetype.json');
+                $data = array_map(function ($item) use ($excludes) {
+                    $item['exist'] = in_array($item['id'], $excludes);
 
-                //     return $item;
-                // }, $data);
+                    return $item;
+                }, $data);
                 break;
             case 'priority':
-                // $excludes = MasterProject::pluck('ref_id')->toArray();
-                // $data = Storage::json('apache/priority.json');
-                // $data = array_map(function ($item) use ($excludes) {
-                //     $item['exist'] = in_array($item['id'], $excludes);
+                $excludes = MasterPriority::pluck('ref_id')->toArray();
+                $data = Storage::json('apache/priority.json');
+                $data = array_map(function ($item) use ($excludes) {
+                    $item['exist'] = in_array($item['id'], $excludes);
 
-                //     return $item;
-                // }, $data);
+                    return $item;
+                }, $data);
                 break;
             case 'status':
-                // $excludes = MasterProject::pluck('ref_id')->toArray();
-                // $data = Storage::json('apache/status.json');
-                // $data = array_map(function ($item) use ($excludes) {
-                //     $item['exist'] = in_array($item['id'], $excludes);
+                $excludes = MasterStatus::pluck('ref_id')->toArray();
+                $data = Storage::json('apache/status.json');
+                $data = array_map(function ($item) use ($excludes) {
+                    $item['exist'] = in_array($item['id'], $excludes);
 
-                //     return $item;
-                // }, $data);
+                    return $item;
+                }, $data);
                 break;
         }
 
