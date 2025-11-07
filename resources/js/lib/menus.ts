@@ -40,7 +40,7 @@ export const menus: NavItem[] = [
             },
             {
                 title: 'Priorities',
-                href: '#',
+                href: master.priorities.index.url(),
                 icon: TriangleAlertIcon,
             },
             {

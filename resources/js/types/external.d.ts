@@ -34,3 +34,13 @@ export interface IssueType {
     avatarId: number;
     exist?: boolean;
 }
+
+export interface Priority {
+    self: string;
+    id: number;
+    description: string;
+    iconUrl: string;
+    name: string;
+    statusColor: string;
+    exist?: boolean;
+}

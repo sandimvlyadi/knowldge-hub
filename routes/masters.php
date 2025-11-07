@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Master\MasterIssueTypeController;
+use App\Http\Controllers\Master\MasterPriorityController;
 use App\Http\Controllers\Master\MasterProjectController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -14,8 +15,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'issuetypes' => 'record',
     ])->except(['create', 'show', 'edit'])->names('master.issuetypes')->withTrashed();
 
-    Route::get('master/priorities/data', [MasterProjectController::class, 'data'])->name('master.priorities.data');
-    Route::resource('master/priorities', MasterProjectController::class)->parameters([
+    Route::get('master/priorities/data', [MasterPriorityController::class, 'data'])->name('master.priorities.data');
+    Route::resource('master/priorities', MasterPriorityController::class)->parameters([
         'priorities' => 'record',
     ])->except(['create', 'show', 'edit'])->names('master.priorities')->withTrashed();
 

@@ -16,3 +16,12 @@ export interface MasterIssueType {
     icon_url: string;
     description: string;
 }
+
+export interface MasterPriority {
+    id: number;
+    ref_id: string;
+    name: string;
+    icon_url: string;
+    status_color: string;
+    description: string;
+}
