@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MasterProject } from '@/types/master/project';
+import { MasterProject } from '@/types/master';
 import { ColumnDef } from '@tanstack/react-table';
 import { EditIcon, SquareArrowOutUpRightIcon } from 'lucide-react';
 
@@ -92,14 +92,16 @@ export const createColumns = (
         cell: ({ row }) => {
             const project = row.original;
             return (
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="cursor-pointer"
-                    onClick={() => onEdit(project)}
-                >
-                    <EditIcon />
-                </Button>
+                <div className="flex items-center justify-center">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="cursor-pointer"
+                        onClick={() => onEdit(project)}
+                    >
+                        <EditIcon />
+                    </Button>
+                </div>
             );
         },
     },

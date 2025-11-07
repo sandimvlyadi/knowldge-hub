@@ -8,3 +8,11 @@ export interface MasterProject {
     url: string;
     description: string;
 }
+
+export interface MasterIssueType {
+    id: number;
+    ref_id: string;
+    name: string;
+    icon_url: string;
+    description: string;
+}

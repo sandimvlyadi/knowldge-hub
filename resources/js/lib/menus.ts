@@ -35,7 +35,7 @@ export const menus: NavItem[] = [
             },
             {
                 title: 'Issue Types',
-                href: '#',
+                href: master.issuetypes.index.url(),
                 icon: TagsIcon,
             },
             {

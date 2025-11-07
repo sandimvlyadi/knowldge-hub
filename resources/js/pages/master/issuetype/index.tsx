@@ -2,7 +2,7 @@ import { DataTable, PaginatedData } from '@/components/data-table';
 import AppLayout from '@/layouts/app-layout';
 import master from '@/routes/master';
 import { PaginatedResponse, type BreadcrumbItem } from '@/types';
-import { MasterProject as DataResponse } from '@/types/master';
+import { MasterIssueType as DataResponse } from '@/types/master';
 import { Head } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -17,27 +17,26 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '#',
     },
     {
-        title: 'Projects',
-        href: master.projects.index.url(),
+        title: 'Issue Types',
+        href: master.issuetypes.index.url(),
     },
 ];
 
 interface FilterParams {
     query?: string;
-    archived?: boolean;
 }
 
 interface Props {
     data: PaginatedResponse<DataResponse>;
 }
 
-function useMasterProjectsData(
+function useMasterIssueTypesData(
     page: number,
     perPage: number,
     filters: FilterParams,
 ) {
     return useQuery({
-        queryKey: ['master-projects', page, perPage, filters],
+        queryKey: ['master-issue-types', page, perPage, filters],
         queryFn: async () => {
             const params: any = {
                 page,
@@ -47,12 +46,9 @@ function useMasterProjectsData(
             if (filters.query) {
                 params.query = filters.query;
             }
-            if (filters.archived !== undefined) {
-                params.archived = filters.archived;
-            }
 
             const response = await axios.get<PaginatedResponse<DataResponse>>(
-                master.projects.data.url(),
+                master.issuetypes.data.url(),
                 {
                     params,
                     withCredentials: true,
@@ -64,7 +60,7 @@ function useMasterProjectsData(
     });
 }
 
-export default function MasterProject(props: Props) {
+export default function MasterIssueType(props: Props) {
     const [state, setState] = useState<'add' | 'edit'>('add');
     const [record, setRecord] = useState<DataResponse | null>(null);
     const [openForm, setOpenForm] = useState(false);
@@ -74,10 +70,9 @@ export default function MasterProject(props: Props) {
     });
     const [filters, setFilters] = useState<FilterParams>({
         query: '',
-        archived: undefined,
     });
 
-    const { data, isLoading, isFetching } = useMasterProjectsData(
+    const { data, isLoading, isFetching } = useMasterIssueTypesData(
         pagination.pageIndex + 1,
         pagination.pageSize,
         filters,
@@ -92,7 +87,7 @@ export default function MasterProject(props: Props) {
     }, []);
 
     const handleFilterChange = useCallback(
-        (filterType: keyof FilterParams, values: string | boolean) => {
+        (filterType: keyof FilterParams, values: string) => {
             setFilters((prev) => ({
                 ...prev,
                 [filterType]: values,
@@ -126,7 +121,7 @@ export default function MasterProject(props: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Master Projects" />
+            <Head title="Master Issue Types" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <Filters
                     filters={filters}

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             MasterProjectSeeder::class,
             MasterIssueTypeSeeder::class,
             MasterPrioritySeeder::class,
+            MasterStatusCategorySeeder::class,
             MasterStatusSeeder::class,
         ]);
     }

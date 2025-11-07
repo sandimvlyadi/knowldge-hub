@@ -23,3 +23,14 @@ export interface Project {
     archived: boolean;
     exist?: boolean;
 }
+
+export interface IssueType {
+    self: string;
+    id: number;
+    description: string;
+    iconUrl: string;
+    name: string;
+    subtask: boolean;
+    avatarId: number;
+    exist?: boolean;
+}

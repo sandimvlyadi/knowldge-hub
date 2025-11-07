@@ -1,4 +1,4 @@
-import { ProjectAvatar } from '@/components/avatar/project-avatar';
+import { GeneralAvatar } from '@/components/avatar/general-avatar';
 import { FormCombobox, FormInput, FormTextarea } from '@/components/form';
 import { FormSheet } from '@/components/form/form-sheet';
 import {
@@ -11,8 +11,8 @@ import { useMasterForm } from '@/hooks/use-master-form';
 import { useOptions } from '@/hooks/use-options';
 import external from '@/routes/external';
 import master from '@/routes/master';
-import { Project as ProjectOption } from '@/types/external';
-import { MasterProject as DataResponse } from '@/types/master';
+import { IssueType as IssueTypeOption } from '@/types/external';
+import { MasterIssueType as DataResponse } from '@/types/master';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -27,16 +27,13 @@ interface Props {
 
 const schema = z.object({
     id: z.string().optional(),
-    ref_id: z.string().min(1, 'Project is required.'),
-    key: z.string().min(1, 'Key is required.'),
+    ref_id: z.string().min(1, 'Issue Type is required.'),
     name: z.string().min(1, 'Name is required.'),
-    avatar: z.url('Invalid URL format.').min(1, 'Avatar is required.'),
-    archived: z.boolean().optional(),
-    url: z.url('Invalid URL format.').min(1, 'URL is required.'),
+    icon_url: z.url('Invalid URL format.').min(1, 'URL is required.'),
     description: z.string().min(1, 'Description is required.'),
 });
 
-export default function MasterProjectForm({
+export default function MasterIssueTypeForm({
     state = 'add',
     record = null,
     open,
@@ -47,30 +44,27 @@ export default function MasterProjectForm({
         defaultValues: {
             id: '',
             ref_id: '',
-            key: '',
             name: '',
-            avatar: '',
-            archived: undefined,
-            url: '',
+            icon_url: '',
             description: '',
         },
     });
 
     const {
         options,
-        data: projectsData,
+        data: issueTypesData,
         loading: loadingOptions,
-    } = useOptions<ProjectOption>({
+    } = useOptions<IssueTypeOption>({
         url: external.getOptions.url(),
-        params: { type: 'project' },
+        params: { type: 'issueType' },
         mapToOption: (item) => ({
             label: item.name,
             value: item.id.toString(),
             icon: () => (
-                <ProjectAvatar
-                    avatar={item.avatarUrls['48x48']}
-                    keyName={item.key}
-                    size="sm"
+                <GeneralAvatar
+                    avatar={item.iconUrl}
+                    keyName={item.name}
+                    size="xs"
                 />
             ),
             disabled: item.exist,
@@ -78,11 +72,11 @@ export default function MasterProjectForm({
     });
 
     const { loading, handleSubmit, handleDelete } = useMasterForm({
-        queryKey: ['master-projects'],
-        storePath: master.projects.store.url(),
-        updatePath: (id) => master.projects.update.url(id),
-        deletePath: (id) => master.projects.destroy.url(id),
-        entityName: 'Project',
+        queryKey: ['master-issue-types'],
+        storePath: master.issuetypes.store.url(),
+        updatePath: (id) => master.issuetypes.update.url(id),
+        deletePath: (id) => master.issuetypes.destroy.url(id),
+        entityName: 'Issue Type',
     });
 
     useEffect(() => {
@@ -90,46 +84,31 @@ export default function MasterProjectForm({
             form.reset({
                 id: record.id.toString(),
                 ref_id: record.ref_id.toString(),
-                key: record.key,
                 name: record.name,
-                avatar: record.avatar,
-                archived: record.archived,
-                url: record.url,
+                icon_url: record.icon_url,
                 description: record.description,
             });
         } else if (state === 'add') {
             form.reset({
                 id: '',
                 ref_id: '',
-                key: '',
                 name: '',
-                avatar: '',
-                archived: undefined,
-                url: '',
+                icon_url: '',
                 description: '',
             });
         }
     }, [state, record, form]);
 
-    const handleProjectChange = (value: string) => {
-        const selectedProject = projectsData.find(
+    const handleIssueTypeChange = (value: string) => {
+        const selectedIssueType = issueTypesData.find(
             (p) => p.id.toString() === value,
         );
 
-        if (selectedProject) {
+        if (selectedIssueType) {
             form.setValue('ref_id', value);
-            form.setValue('key', selectedProject.key);
-            form.setValue('name', selectedProject.name);
-            form.setValue('avatar', selectedProject.avatarUrls['48x48']);
-            form.setValue('archived', selectedProject.archived);
-            form.setValue(
-                'url',
-                `https://issues.apache.org/jira/projects/${selectedProject.key}`,
-            );
-            form.setValue(
-                'description',
-                selectedProject.projectCategory?.description || '',
-            );
+            form.setValue('name', selectedIssueType.name);
+            form.setValue('icon_url', selectedIssueType.iconUrl);
+            form.setValue('description', selectedIssueType.description || '');
         }
     };
 
@@ -150,13 +129,13 @@ export default function MasterProjectForm({
                 if (!isOpen) form.reset();
                 setOpen(isOpen);
             }}
-            title={`${state === 'add' ? 'Add' : 'Edit'} Project`}
+            title={`${state === 'add' ? 'Add' : 'Edit'} Issue Type`}
             onSave={form.handleSubmit(onSubmit)}
             onDelete={state === 'edit' ? onDelete : undefined}
             loading={loading}
             state={state}
         >
-            <form id="form-master-project" className="contents">
+            <form id="form-master-issue-type" className="contents">
                 <FieldGroup>
                     <Controller
                         name="ref_id"
@@ -167,19 +146,19 @@ export default function MasterProjectForm({
                                 className="gap-1"
                             >
                                 <FieldLabel htmlFor="ref_id">
-                                    Project
+                                    Issue Type
                                 </FieldLabel>
                                 <FormCombobox
                                     id="ref_id"
-                                    placeholder="Select Project"
-                                    searchPlaceholder="Search projects..."
+                                    placeholder="Select issue type..."
+                                    searchPlaceholder="Search issue types..."
                                     aria-invalid={fieldState.invalid}
                                     options={options}
                                     isLoading={loadingOptions}
                                     value={field.value}
                                     onChange={(value) => {
                                         field.onChange(value);
-                                        handleProjectChange(value);
+                                        handleIssueTypeChange(value);
                                     }}
                                 />
                                 {fieldState.invalid && (
@@ -189,39 +168,6 @@ export default function MasterProjectForm({
                         )}
                     />
                 </FieldGroup>
-
-                <FieldGroup>
-                    <Controller
-                        name="key"
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                            <Field
-                                data-invalid={fieldState.invalid}
-                                className="gap-1"
-                            >
-                                <FieldLabel htmlFor="key">Key</FieldLabel>
-                                <FormInput
-                                    {...field}
-                                    id="key"
-                                    type="text"
-                                    readOnly
-                                    autoComplete="off"
-                                    aria-invalid={fieldState.invalid}
-                                />
-                                {fieldState.invalid && (
-                                    <FieldError errors={[fieldState.error]} />
-                                )}
-                            </Field>
-                        )}
-                    />
-                </FieldGroup>
-
-                <ProjectAvatar
-                    avatar={form.watch('avatar')}
-                    keyName={form.watch('key')}
-                    archived={form.watch('archived')}
-                    size="lg"
-                />
 
                 <FieldGroup>
                     <Controller
@@ -236,31 +182,6 @@ export default function MasterProjectForm({
                                 <FormInput
                                     {...field}
                                     id="name"
-                                    type="text"
-                                    autoComplete="off"
-                                    aria-invalid={fieldState.invalid}
-                                />
-                                {fieldState.invalid && (
-                                    <FieldError errors={[fieldState.error]} />
-                                )}
-                            </Field>
-                        )}
-                    />
-                </FieldGroup>
-
-                <FieldGroup>
-                    <Controller
-                        name="url"
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                            <Field
-                                data-invalid={fieldState.invalid}
-                                className="gap-1"
-                            >
-                                <FieldLabel htmlFor="url">URL</FieldLabel>
-                                <FormInput
-                                    {...field}
-                                    id="url"
                                     type="text"
                                     autoComplete="off"
                                     aria-invalid={fieldState.invalid}
