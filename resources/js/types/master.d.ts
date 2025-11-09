@@ -25,3 +25,20 @@ export interface MasterPriority {
     status_color: string;
     description: string;
 }
+
+export interface MasterStatusCategory {
+    id: number;
+    ref_id: string;
+    key: string;
+    name: string;
+    color_name: string;
+}
+
+export interface MasterStatus {
+    id: number;
+    ref_id: string;
+    name: string;
+    icon_url: string;
+    description: string;
+    status_category: MasterStatusCategory;
+}

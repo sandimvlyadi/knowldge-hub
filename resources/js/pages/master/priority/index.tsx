@@ -30,7 +30,7 @@ interface Props {
     data: PaginatedResponse<DataResponse>;
 }
 
-function useMasterPrioritysData(
+function useMasterPriorityData(
     page: number,
     perPage: number,
     filters: FilterParams,
@@ -72,7 +72,7 @@ export default function MasterPriority(props: Props) {
         query: '',
     });
 
-    const { data, isLoading, isFetching } = useMasterPrioritysData(
+    const { data, isLoading, isFetching } = useMasterPriorityData(
         pagination.pageIndex + 1,
         pagination.pageSize,
         filters,

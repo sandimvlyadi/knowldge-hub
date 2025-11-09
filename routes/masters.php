@@ -3,6 +3,7 @@
 use App\Http\Controllers\Master\MasterIssueTypeController;
 use App\Http\Controllers\Master\MasterPriorityController;
 use App\Http\Controllers\Master\MasterProjectController;
+use App\Http\Controllers\Master\MasterStatusController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('master/projects/data', [MasterProjectController::class, 'data'])->name('master.projects.data');
@@ -20,8 +21,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'priorities' => 'record',
     ])->except(['create', 'show', 'edit'])->names('master.priorities')->withTrashed();
 
-    Route::get('master/statuses/data', [MasterProjectController::class, 'data'])->name('master.statuses.data');
-    Route::resource('master/statuses', MasterProjectController::class)->parameters([
+    Route::get('master/statuses/data', [MasterStatusController::class, 'data'])->name('master.statuses.data');
+    Route::get('master/statuses/categories', [MasterStatusController::class, 'optionCategory'])->name('master.statuses.option.category');
+    Route::resource('master/statuses', MasterStatusController::class)->parameters([
         'statuses' => 'record',
     ])->except(['create', 'show', 'edit'])->names('master.statuses')->withTrashed();
 });

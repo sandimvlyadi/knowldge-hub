@@ -31,7 +31,7 @@ interface Props {
     data: PaginatedResponse<DataResponse>;
 }
 
-function useMasterProjectsData(
+function useMasterProjectData(
     page: number,
     perPage: number,
     filters: FilterParams,
@@ -77,7 +77,7 @@ export default function MasterProject(props: Props) {
         archived: undefined,
     });
 
-    const { data, isLoading, isFetching } = useMasterProjectsData(
+    const { data, isLoading, isFetching } = useMasterProjectData(
         pagination.pageIndex + 1,
         pagination.pageSize,
         filters,

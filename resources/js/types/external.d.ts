@@ -44,3 +44,22 @@ export interface Priority {
     statusColor: string;
     exist?: boolean;
 }
+
+export interface StatusCategory {
+    self: string;
+    id: number;
+    key: string;
+    name: string;
+    colorName: string;
+    exist?: boolean;
+}
+
+export interface Status {
+    self: string;
+    id: number;
+    description: string;
+    iconUrl: string;
+    name: string;
+    statusCategory: StatusCategory;
+    exist?: boolean;
+}

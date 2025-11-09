@@ -45,7 +45,7 @@ export const menus: NavItem[] = [
             },
             {
                 title: 'Statuses',
-                href: '#',
+                href: master.statuses.index.url(),
                 icon: CirclePlusIcon,
             },
         ],

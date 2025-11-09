@@ -2,7 +2,7 @@ import { DataTable, PaginatedData } from '@/components/data-table';
 import AppLayout from '@/layouts/app-layout';
 import master from '@/routes/master';
 import { PaginatedResponse, type BreadcrumbItem } from '@/types';
-import { MasterIssueType as DataResponse } from '@/types/master';
+import { MasterStatus as DataResponse } from '@/types/master';
 import { Head } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -17,26 +17,27 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '#',
     },
     {
-        title: 'Issue Types',
-        href: master.issuetypes.index.url(),
+        title: 'Statuses',
+        href: master.statuses.index.url(),
     },
 ];
 
 interface FilterParams {
     query?: string;
+    category_id?: string;
 }
 
 interface Props {
     data: PaginatedResponse<DataResponse>;
 }
 
-function useMasterIssueTypeData(
+function useMasterStatusData(
     page: number,
     perPage: number,
     filters: FilterParams,
 ) {
     return useQuery({
-        queryKey: ['master-issue-types', page, perPage, filters],
+        queryKey: ['master-statuses', page, perPage, filters],
         queryFn: async () => {
             const params: any = {
                 page,
@@ -47,8 +48,12 @@ function useMasterIssueTypeData(
                 params.query = filters.query;
             }
 
+            if (filters.category_id) {
+                params.category_id = filters.category_id;
+            }
+
             const response = await axios.get<PaginatedResponse<DataResponse>>(
-                master.issuetypes.data.url(),
+                master.statuses.data.url(),
                 {
                     params,
                     withCredentials: true,
@@ -60,7 +65,7 @@ function useMasterIssueTypeData(
     });
 }
 
-export default function MasterIssueType(props: Props) {
+export default function MasterStatus(props: Props) {
     const [state, setState] = useState<'add' | 'edit'>('add');
     const [record, setRecord] = useState<DataResponse | null>(null);
     const [openForm, setOpenForm] = useState(false);
@@ -70,9 +75,10 @@ export default function MasterIssueType(props: Props) {
     });
     const [filters, setFilters] = useState<FilterParams>({
         query: '',
+        category_id: '',
     });
 
-    const { data, isLoading, isFetching } = useMasterIssueTypeData(
+    const { data, isLoading, isFetching } = useMasterStatusData(
         pagination.pageIndex + 1,
         pagination.pageSize,
         filters,
@@ -121,7 +127,7 @@ export default function MasterIssueType(props: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Master Issue Types" />
+            <Head title="Master Statuses" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <Filters
                     filters={filters}
