@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('master_priorities', function (Blueprint $table) {
+        Schema::create('master_reporters', function (Blueprint $table) {
             $table->id();
-            $table->string('ref_id')->unique();
+            $table->string('key')->unique();
             $table->string('name');
-            $table->string('icon_url');
-            $table->string('status_color')->nullable();
-            $table->text('description')->nullable();
+            $table->string('display_name');
+            $table->string('avatar');
+            $table->boolean('active')->default(true);
+            $table->string('time_zone')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
@@ -31,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('master_priorities');
+        Schema::dropIfExists('master_reporters');
     }
 };
