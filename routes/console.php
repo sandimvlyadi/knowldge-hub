@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('issue:get')->hourly();
 Schedule::command('issue:store')->everyFifteenMinutes();
+Schedule::command('apache:option')->daily();
