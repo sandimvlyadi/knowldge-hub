@@ -2,6 +2,10 @@
 
 namespace App\Helpers;
 
+use App\Models\Master\MasterIssueType;
+use App\Models\Master\MasterPriority;
+use App\Models\Master\MasterProject;
+use App\Models\Master\MasterStatus;
 use Http;
 use Log;
 
@@ -20,6 +24,10 @@ class ApacheHelper
         $jqlParts = [];
 
         // Project filter
+        $defaultProjects = MasterProject::pluck('name')->toArray();
+        $defaultProjects = array_map(function ($project) {
+            return '"'.str_replace('"', '\\"', $project).'"';
+        }, $defaultProjects);
         $projectFilter = GeneralHelper::FilterEmptyValues($filters['project'] ?? []);
         if (! empty($projectFilter)) {
             $projects = array_map(function ($project) {
@@ -28,10 +36,14 @@ class ApacheHelper
             $jqlParts[] = 'project IN ('.implode(', ', $projects).')';
         } else {
             // Default projects if no filter applied
-            $jqlParts[] = 'project IN ("Axis2", "CXF", "Hadoop Common", "HBase", "Struts 2")';
+            $jqlParts[] = 'project IN ('.implode(', ', $defaultProjects).')';
         }
 
         // Issue Type filter
+        $defaultIssueTypes = MasterIssueType::pluck('name')->toArray();
+        $defaultIssueTypes = array_map(function ($type) {
+            return '"'.str_replace('"', '\\"', $type).'"';
+        }, $defaultIssueTypes);
         $issueTypeFilter = GeneralHelper::FilterEmptyValues($filters['issueType'] ?? []);
         if (! empty($issueTypeFilter)) {
             $issueTypes = array_map(function ($type) {
@@ -40,10 +52,14 @@ class ApacheHelper
             $jqlParts[] = 'issuetype IN ('.implode(', ', $issueTypes).')';
         } else {
             // Default issue types if no filter applied
-            $jqlParts[] = 'issuetype IN ("New Feature", "Improvement", "Wish")';
+            $jqlParts[] = 'issuetype IN ('.implode(', ', $defaultIssueTypes).')';
         }
 
         // Status filter
+        $defaultStatuses = MasterStatus::pluck('name')->toArray();
+        $defaultStatuses = array_map(function ($status) {
+            return '"'.str_replace('"', '\\"', $status).'"';
+        }, $defaultStatuses);
         $statusFilter = GeneralHelper::FilterEmptyValues($filters['status'] ?? []);
         if (! empty($statusFilter)) {
             $statuses = array_map(function ($status) {
@@ -52,16 +68,23 @@ class ApacheHelper
             $jqlParts[] = 'status IN ('.implode(', ', $statuses).')';
         } else {
             // Default statuses if no filter applied
-            $jqlParts[] = 'status IN ("Resolved", "Closed")';
+            $jqlParts[] = 'status IN ('.implode(', ', $defaultStatuses).')';
         }
 
         // Priority filter (optional, only add if specified)
+        $defaultPriorities = MasterPriority::pluck('name')->toArray();
+        $defaultPriorities = array_map(function ($priority) {
+            return '"'.str_replace('"', '\\"', $priority).'"';
+        }, $defaultPriorities);
         $priorityFilter = GeneralHelper::FilterEmptyValues($filters['priority'] ?? []);
         if (! empty($priorityFilter)) {
             $priorities = array_map(function ($priority) {
                 return '"'.str_replace('"', '\\"', $priority).'"';
             }, $priorityFilter);
             $jqlParts[] = 'priority IN ('.implode(', ', $priorities).')';
+        } else {
+            // Default priorities if no filter applied
+            $jqlParts[] = 'priority IN ('.implode(', ', $defaultPriorities).')';
         }
 
         $jql = implode(' AND ', $jqlParts);

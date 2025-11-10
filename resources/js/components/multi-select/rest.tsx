@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Command,
-    CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
@@ -1279,96 +1278,40 @@ export const MultiSelectRest = React.forwardRef<
                                     'overscroll-behavior-y-contain',
                                 )}
                             >
-                                <CommandEmpty>
-                                    {isLoading ? (
-                                        <div className="flex items-center justify-center py-6">
-                                            <Spinner className="me-1" />{' '}
-                                            Loading...
-                                        </div>
-                                    ) : (
-                                        emptyIndicator || 'No results found.'
-                                    )}
-                                </CommandEmpty>
-                                {!hideSelectAll &&
-                                    !searchValue &&
-                                    !isLoading && (
-                                        <CommandGroup>
-                                            <CommandItem
-                                                key="all"
-                                                onSelect={toggleAll}
-                                                role="option"
-                                                aria-selected={
-                                                    selectedValues.length ===
-                                                    options.filter(
-                                                        (opt) => !opt.disabled,
-                                                    ).length
-                                                }
-                                                aria-label={`Select all ${options.length} options`}
-                                                className="cursor-pointer"
-                                            >
-                                                <div
-                                                    className={cn(
-                                                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                                        selectedValues.length ===
-                                                            options.filter(
-                                                                (opt) =>
-                                                                    !opt.disabled,
-                                                            ).length
-                                                            ? 'bg-primary text-primary-foreground'
-                                                            : 'opacity-50 [&_svg]:invisible',
-                                                    )}
-                                                    aria-hidden="true"
-                                                >
-                                                    <CheckIcon className="h-4 w-4" />
-                                                </div>
-                                                <span>
-                                                    (Select All
-                                                    {options.length > 20
-                                                        ? ` - ${options.length} options`
-                                                        : ''}
-                                                    )
-                                                </span>
-                                            </CommandItem>
-                                        </CommandGroup>
-                                    )}
-                                {!isLoading && (
-                                    <CommandGroup>
-                                        {options.map((option) => {
-                                            const isSelected =
-                                                selectedValues.includes(
-                                                    getOptionValue(option),
-                                                );
-                                            return (
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center py-6">
+                                        <Spinner className="me-1" /> Loading...
+                                    </div>
+                                ) : options.length === 0 ? (
+                                    <div className="py-6 text-center text-sm text-muted-foreground">
+                                        {emptyIndicator || 'No results found.'}
+                                    </div>
+                                ) : (
+                                    <>
+                                        {!hideSelectAll && !searchValue && (
+                                            <CommandGroup>
                                                 <CommandItem
-                                                    key={option.id}
-                                                    onSelect={() =>
-                                                        toggleOption(
-                                                            getOptionValue(
-                                                                option,
-                                                            ),
-                                                        )
-                                                    }
+                                                    key="all"
+                                                    onSelect={toggleAll}
                                                     role="option"
-                                                    aria-selected={isSelected}
-                                                    aria-disabled={
-                                                        option.disabled
+                                                    aria-selected={
+                                                        selectedValues.length ===
+                                                        options.filter(
+                                                            (opt) =>
+                                                                !opt.disabled,
+                                                        ).length
                                                     }
-                                                    aria-label={`${getOptionLabel(option)}${
-                                                        isSelected
-                                                            ? ', selected'
-                                                            : ', not selected'
-                                                    }${option.disabled ? ', disabled' : ''}`}
-                                                    className={cn(
-                                                        'cursor-pointer',
-                                                        option.disabled &&
-                                                            'cursor-not-allowed opacity-50',
-                                                    )}
-                                                    disabled={option.disabled}
+                                                    aria-label={`Select all ${options.length} options`}
+                                                    className="cursor-pointer"
                                                 >
                                                     <div
                                                         className={cn(
                                                             'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                                            isSelected
+                                                            selectedValues.length ===
+                                                                options.filter(
+                                                                    (opt) =>
+                                                                        !opt.disabled,
+                                                                ).length
                                                                 ? 'bg-primary text-primary-foreground'
                                                                 : 'opacity-50 [&_svg]:invisible',
                                                         )}
@@ -1376,54 +1319,117 @@ export const MultiSelectRest = React.forwardRef<
                                                     >
                                                         <CheckIcon className="h-4 w-4" />
                                                     </div>
-                                                    {option.icon && (
-                                                        <option.icon
-                                                            className="mr-2 h-4 w-4 text-muted-foreground"
-                                                            aria-hidden="true"
-                                                        />
-                                                    )}
-                                                    {iconRenderer && (
-                                                        <>
-                                                            {iconRenderer(
-                                                                option,
-                                                            )}
-                                                        </>
-                                                    )}
                                                     <span>
-                                                        {getOptionLabel(option)}
+                                                        (Select All
+                                                        {options.length > 20
+                                                            ? ` - ${options.length} options`
+                                                            : ''}
+                                                        )
                                                     </span>
                                                 </CommandItem>
-                                            );
-                                        })}
-                                    </CommandGroup>
-                                )}
-                                <CommandSeparator />
-                                <CommandGroup>
-                                    <div className="flex items-center justify-between">
-                                        {selectedValues.length > 0 && (
-                                            <>
-                                                <CommandItem
-                                                    onSelect={handleClear}
-                                                    className="flex-1 cursor-pointer justify-center"
-                                                >
-                                                    Clear
-                                                </CommandItem>
-                                                <Separator
-                                                    orientation="vertical"
-                                                    className="flex h-full min-h-6"
-                                                />
-                                            </>
+                                            </CommandGroup>
                                         )}
-                                        <CommandItem
-                                            onSelect={() =>
-                                                setIsPopoverOpen(false)
-                                            }
-                                            className="max-w-full flex-1 cursor-pointer justify-center"
-                                        >
-                                            Close
-                                        </CommandItem>
-                                    </div>
-                                </CommandGroup>
+                                        <CommandGroup>
+                                            {options.map((option) => {
+                                                const isSelected =
+                                                    selectedValues.includes(
+                                                        getOptionValue(option),
+                                                    );
+                                                return (
+                                                    <CommandItem
+                                                        key={option.id}
+                                                        onSelect={() =>
+                                                            toggleOption(
+                                                                getOptionValue(
+                                                                    option,
+                                                                ),
+                                                            )
+                                                        }
+                                                        role="option"
+                                                        aria-selected={
+                                                            isSelected
+                                                        }
+                                                        aria-disabled={
+                                                            option.disabled
+                                                        }
+                                                        aria-label={`${getOptionLabel(option)}${
+                                                            isSelected
+                                                                ? ', selected'
+                                                                : ', not selected'
+                                                        }${option.disabled ? ', disabled' : ''}`}
+                                                        className={cn(
+                                                            'cursor-pointer',
+                                                            option.disabled &&
+                                                                'cursor-not-allowed opacity-50',
+                                                        )}
+                                                        disabled={
+                                                            option.disabled
+                                                        }
+                                                    >
+                                                        <div
+                                                            className={cn(
+                                                                'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                                                                isSelected
+                                                                    ? 'bg-primary text-primary-foreground'
+                                                                    : 'opacity-50 [&_svg]:invisible',
+                                                            )}
+                                                            aria-hidden="true"
+                                                        >
+                                                            <CheckIcon className="h-4 w-4" />
+                                                        </div>
+                                                        {option.icon && (
+                                                            <option.icon
+                                                                className="mr-2 h-4 w-4 text-muted-foreground"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+                                                        {iconRenderer && (
+                                                            <>
+                                                                {iconRenderer(
+                                                                    option,
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        <span>
+                                                            {getOptionLabel(
+                                                                option,
+                                                            )}
+                                                        </span>
+                                                    </CommandItem>
+                                                );
+                                            })}
+                                        </CommandGroup>
+                                        <CommandSeparator />
+                                        <CommandGroup>
+                                            <div className="flex items-center justify-between">
+                                                {selectedValues.length > 0 && (
+                                                    <>
+                                                        <CommandItem
+                                                            onSelect={
+                                                                handleClear
+                                                            }
+                                                            className="flex-1 cursor-pointer justify-center"
+                                                        >
+                                                            Clear
+                                                        </CommandItem>
+                                                        <Separator
+                                                            orientation="vertical"
+                                                            className="flex h-full min-h-6"
+                                                        />
+                                                    </>
+                                                )}
+                                                <CommandItem
+                                                    onSelect={() =>
+                                                        setIsPopoverOpen(false)
+                                                    }
+                                                    className="max-w-full flex-1 cursor-pointer justify-center"
+                                                >
+                                                    Close
+                                                </CommandItem>
+                                            </div>
+                                        </CommandGroup>
+                                    </>
+                                )}
                             </CommandList>
                         </Command>
                     </PopoverContent>
