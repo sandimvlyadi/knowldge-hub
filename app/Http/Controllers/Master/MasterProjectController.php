@@ -94,4 +94,20 @@ class MasterProjectController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function option(Request $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', null);
+
+        $data = MasterProject::when($search, function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%");
+        })
+            ->latest()
+            ->paginate(perPage: $perPage, page: $page)
+            ->withQueryString();
+
+        return response()->json($data, 200);
+    }
 }
