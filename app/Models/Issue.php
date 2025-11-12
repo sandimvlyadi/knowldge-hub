@@ -65,4 +65,9 @@ class Issue extends Model
     {
         return $this->belongsTo(MasterReporter::class, 'ref_reporter_key', 'key');
     }
+
+    public function libraries()
+    {
+        return $this->belongsToMany(Library::class, 'issue_library', 'issue_key', 'library_name', 'key', 'name');
+    }
 }
