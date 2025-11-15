@@ -84,12 +84,19 @@ export interface IssueFields {
     components: Component[];
 }
 
+export interface Library {
+    name: string;
+    url: string;
+    description: string;
+}
+
 export interface Issue {
     expand: string;
     id: number;
     self: string;
     key: string;
     fields: IssueFields;
+    libraries: Library[];
 }
 
 export interface IssuesResponse {
