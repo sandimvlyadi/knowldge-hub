@@ -1,3 +1,11 @@
+import {
+    MasterIssueType,
+    MasterPriority,
+    MasterProject,
+    MasterReporter,
+    MasterStatus,
+} from './master';
+
 export interface IssueType {
     self: string;
     id: number;
@@ -105,4 +113,21 @@ export interface IssuesResponse {
     maxResults: number;
     total: number;
     issues: Issue[];
+}
+
+export interface IssueDetail {
+    id: number;
+    ref_id: number;
+    key: string;
+    url: string;
+    summary: string;
+    description: string;
+    components: string;
+    created: string;
+    project: MasterProject;
+    issue_type: MasterIssueType;
+    priority: MasterPriority;
+    status: MasterStatus;
+    reporter: MasterReporter;
+    libraries: Library[];
 }

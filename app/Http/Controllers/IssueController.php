@@ -172,4 +172,20 @@ class IssueController extends Controller
 
         return response()->json($response, 200);
     }
+
+    public function key($key): Response
+    {
+        $record = Issue::with([
+            'project',
+            'issueType',
+            'priority',
+            'status.statusCategory',
+            'reporter',
+            'libraries',
+        ])->where('key', $key)->firstOrFail();
+
+        return inertia('issues/detail', [
+            'record' => $record,
+        ]);
+    }
 }

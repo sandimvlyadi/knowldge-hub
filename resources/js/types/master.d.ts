@@ -42,3 +42,13 @@ export interface MasterStatus {
     description: string;
     status_category: MasterStatusCategory;
 }
+
+export interface MasterReporter {
+    id: number;
+    key: string;
+    name: string;
+    display_name: string;
+    avatar: string;
+    active: boolean;
+    time_zone: string;
+}

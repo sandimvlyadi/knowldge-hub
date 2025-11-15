@@ -34,6 +34,7 @@ export const columns: ColumnDef<Issue>[] = [
         header: 'Issue Key',
         cell: ({ row }) => {
             const issue = row.original;
+            return issue.key;
             return (
                 <a
                     href={`https://issues.apache.org/jira/browse/${issue.key}`}

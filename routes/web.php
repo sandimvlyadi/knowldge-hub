@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::get('issues/data', [IssueController::class, 'data'])->name('issues.data');
+    Route::get('issues/{key}', [IssueController::class, 'key'])->name('issues.key');
 });
 
 require __DIR__.'/masters.php';

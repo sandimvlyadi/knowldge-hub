@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import issues from '@/routes/issues';
 import { type BreadcrumbItem } from '@/types';
 import { IssuesResponse } from '@/types/issue';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
@@ -102,6 +102,10 @@ export default function IssuesIndex() {
         [],
     );
 
+    const handleRowClick = useCallback((row: any) => {
+        router.visit(issues.key.url({ key: row.key }));
+    }, []);
+
     const tableData = {
         data: data?.issues ?? [],
         total: data?.total ?? 0,
@@ -123,6 +127,7 @@ export default function IssuesIndex() {
                     loading={isLoading || isFetching}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
+                    onRowClick={handleRowClick}
                 />
             </div>
         </AppLayout>
