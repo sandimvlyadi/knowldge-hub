@@ -9,6 +9,7 @@ interface Node {
     type: string;
     val: number;
     color: string;
+    originalLabel?: string;
 }
 
 interface Link {
@@ -104,7 +105,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
             links.push({
                 source: data.key,
                 target: `type-${data.issuetype}`,
-                label: 'type',
+                label: 'issue type',
             });
         }
 
@@ -169,7 +170,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
             links.push({
                 source: data.key,
                 target: 'components-group',
-                label: 'has components',
+                label: 'affected components',
             });
 
             // Add individual component nodes
@@ -191,12 +192,12 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
 
         // Method nodes with group
         if (data.methods && data.methods.length > 0) {
-            // Add methods group node
+            // Add methods group node with count
             nodes.push({
                 id: 'methods-group',
-                label: 'Methods',
+                label: `${data.methods.length.toString()}\nMethods`,
                 type: 'method',
-                val: 15,
+                val: 20,
                 color: nodeColors.method,
             });
             links.push({
@@ -205,14 +206,15 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 label: 'uses methods',
             });
 
-            // Add individual method nodes
+            // Add individual method nodes without labels
             data.methods.forEach((method) => {
                 nodes.push({
                     id: `method-${method}`,
-                    label: method,
+                    label: '',
                     type: 'method',
-                    val: 8,
+                    val: 6,
                     color: nodeColors.method,
+                    originalLabel: method,
                 });
                 links.push({
                     source: 'methods-group',
@@ -241,8 +243,12 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 graphData={graphData}
                 width={dimensions.width}
                 height={dimensions.height}
-                nodeLabel="label"
+                nodeLabel={(node: any) => node.originalLabel || node.label}
                 nodeAutoColorBy="type"
+                onNodeDragEnd={(node: any) => {
+                    node.fx = node.x;
+                    node.fy = node.y;
+                }}
                 nodeCanvasObject={(
                     node: any,
                     ctx: CanvasRenderingContext2D,
@@ -251,10 +257,6 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                     const label = node.label;
                     const fontSize = 12 / globalScale;
                     ctx.font = `${fontSize}px Sans-Serif`;
-                    const textWidth = ctx.measureText(label).width;
-                    const bckgDimensions = [textWidth, fontSize].map(
-                        (n) => n + fontSize * 0.4,
-                    );
 
                     // Draw node circle
                     ctx.fillStyle = node.color;
@@ -269,24 +271,59 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                     );
                     ctx.fill();
 
-                    // Draw label background
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                    ctx.fillRect(
-                        node.x! - bckgDimensions[0] / 2,
-                        node.y! + node.val / 2 + 2,
-                        bckgDimensions[0],
-                        bckgDimensions[1],
-                    );
+                    // Only draw label if it exists
+                    if (label) {
+                        // For methods-group, draw text inside the circle
+                        if (node.id === 'methods-group') {
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = `bold ${fontSize * 1.2}px Sans-Serif`;
 
-                    // Draw label text
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#1b1b18';
-                    ctx.fillText(
-                        label,
-                        node.x!,
-                        node.y! + node.val / 2 + 2 + bckgDimensions[1] / 2,
-                    );
+                            // Split label by newline and draw each line
+                            const lines = label.split('\n');
+                            const lineHeight = fontSize * 1.3;
+                            const totalHeight = lines.length * lineHeight;
+                            const startY =
+                                node.y! - totalHeight / 2 + lineHeight / 2;
+
+                            lines.forEach((line: string, i: number) => {
+                                ctx.fillText(
+                                    line,
+                                    node.x!,
+                                    startY + i * lineHeight,
+                                );
+                            });
+                        } else {
+                            // For other nodes, draw label below
+                            const textWidth = ctx.measureText(label).width;
+                            const bckgDimensions = [textWidth, fontSize].map(
+                                (n) => n + fontSize * 0.4,
+                            );
+
+                            // Draw label background
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                            ctx.fillRect(
+                                node.x! - bckgDimensions[0] / 2,
+                                node.y! + node.val / 2 + 2,
+                                bckgDimensions[0],
+                                bckgDimensions[1],
+                            );
+
+                            // Draw label text
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillStyle = '#1b1b18';
+                            ctx.fillText(
+                                label,
+                                node.x!,
+                                node.y! +
+                                    node.val / 2 +
+                                    2 +
+                                    bckgDimensions[1] / 2,
+                            );
+                        }
+                    }
                 }}
                 linkLabel="label"
                 linkColor={() => '#94a3b8'}
