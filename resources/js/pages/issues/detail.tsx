@@ -1,17 +1,30 @@
+import { KnowledgeGraph } from '@/components/knowledge-graph';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import issues from '@/routes/issues';
 import { BreadcrumbItem } from '@/types';
+import { Graph as GraphType } from '@/types/graph';
 import { IssueDetail } from '@/types/issue';
 import { Head } from '@inertiajs/react';
+import { MaximizeIcon } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     record: IssueDetail;
+    graph?: GraphType;
 }
 
 export default function IssuesDetail(props: Props) {
-    const { record } = props;
+    const { record, graph } = props;
+    const [openGraphDialog, setOpenGraphDialog] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -23,6 +36,10 @@ export default function IssuesDetail(props: Props) {
             href: issues.key.url({ key: record.key }),
         },
     ];
+
+    const toggleGraphDialog = () => {
+        setOpenGraphDialog(!openGraphDialog);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -229,6 +246,31 @@ export default function IssuesDetail(props: Props) {
                             </div>
                         </div>
 
+                        {/* Knowledge Graph Section */}
+                        <div className="mb-6 rounded-lg border p-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="stext-lg font-semibold">
+                                    Knowledge Graph
+                                </h4>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="cursor-pointer"
+                                    onClick={toggleGraphDialog}
+                                >
+                                    <MaximizeIcon className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            {graph ? (
+                                <KnowledgeGraph data={graph} />
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    No graph data available
+                                </p>
+                            )}
+                        </div>
+
                         {/* People Section */}
                         <div className="mb-6 rounded-lg border p-4">
                             <h4 className="mb-4 text-lg font-semibold">
@@ -280,6 +322,22 @@ export default function IssuesDetail(props: Props) {
                     </div>
                 </div>
             </div>
+            <Dialog open={openGraphDialog} onOpenChange={toggleGraphDialog}>
+                <DialogContent className="!fixed !inset-0 !top-0 !left-0 m-0 h-screen w-screen !max-w-none !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 p-0">
+                    <DialogHeader className="px-6 pt-6 pb-4">
+                        <DialogTitle>Knowledge Graph: {record.key}</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-hidden px-6 pb-6">
+                        {graph ? (
+                            <KnowledgeGraph data={graph} />
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                No graph data available
+                            </p>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
