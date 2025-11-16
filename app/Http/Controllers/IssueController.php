@@ -20,6 +20,7 @@ class IssueController extends Controller
         $startAt = $request->query('startAt', 0);
         $maxResults = $request->query('maxResults', 10);
         $search = $request->input('query', null);
+        $hasMethod = $request->input('has_method', 'true');
 
         // Get filter parameters and ensure they are arrays
         $filters = [
@@ -38,7 +39,7 @@ class IssueController extends Controller
             'status.statusCategory',
             'reporter',
             'libraries',
-        ])->whereHas('libraries');
+        ]);
 
         // Apply filters
         if ($search) {
@@ -47,6 +48,7 @@ class IssueController extends Controller
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
+
         if (! empty($filters['project'])) {
             $query->whereHas('project', function ($q) use ($filters) {
                 $q->whereIn('name', $filters['project']);
@@ -74,6 +76,12 @@ class IssueController extends Controller
         if (! empty($filters['reporter'])) {
             $query->whereHas('reporter', function ($q) use ($filters) {
                 $q->whereIn('key', $filters['reporter']);
+            });
+        }
+
+        if ($hasMethod === 'true') {
+            $query->whereHas('libraries', function ($q) {
+                $q->whereNotNull('name')->where('name', '!=', '');
             });
         }
 

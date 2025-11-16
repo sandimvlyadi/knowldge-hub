@@ -24,6 +24,7 @@ interface FilterParams {
     priority?: string[];
     status?: string[];
     reporter?: string[];
+    has_method?: boolean;
 }
 
 function useIssuesData(
@@ -57,6 +58,9 @@ function useIssuesData(
             }
             if (filters.reporter?.length) {
                 params.reporter = filters.reporter;
+            }
+            if (filters.has_method !== undefined) {
+                params.has_method = filters.has_method;
             }
 
             const response = await axios.get<IssuesResponse>(
@@ -99,7 +103,10 @@ export default function IssuesIndex() {
     }, []);
 
     const handleFilterChange = useCallback(
-        (filterType: keyof FilterParams, values: string | string[]) => {
+        (
+            filterType: keyof FilterParams,
+            values: string | string[] | boolean,
+        ) => {
             setFilters((prev) => ({
                 ...prev,
                 [filterType]: values,

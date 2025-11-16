@@ -1,3 +1,4 @@
+import HasMethodFilter from './has-method-filter';
 import IssueTypeFilter from './issue-type-filter';
 import PriorityFilter from './priority-filter';
 import ProjectFilter from './project-filter';
@@ -12,13 +13,14 @@ interface FilterParams {
     priority?: string[];
     status?: string[];
     reporter?: string[];
+    has_method?: boolean;
 }
 
 interface FiltersProps {
     filters: FilterParams;
     onFilterChange: (
         filterType: keyof FilterParams,
-        values: string | string[],
+        values: string | string[] | boolean,
     ) => void;
 }
 
@@ -58,6 +60,10 @@ export default function Filters({ filters, onFilterChange }: FiltersProps) {
                 onValueChange={(values: string[]) =>
                     onFilterChange('reporter', values)
                 }
+            />
+            <HasMethodFilter
+                value={filters.has_method}
+                onValueChange={(value) => onFilterChange('has_method', value)}
             />
         </div>
     );
