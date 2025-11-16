@@ -44,8 +44,10 @@ class IssueController extends Controller
         // Apply filters
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('summary', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                $q->where('key', 'like', "%{$search}%")
+                    ->orWhere('summary', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('components', 'like', "%{$search}%");
             });
         }
 

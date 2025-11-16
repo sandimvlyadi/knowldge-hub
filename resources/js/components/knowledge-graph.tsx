@@ -1,3 +1,4 @@
+import { useAppearance } from '@/hooks/use-appearance';
 import { Graph } from '@/types/graph';
 import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
@@ -10,6 +11,7 @@ interface Node {
     val: number;
     color: string;
     originalLabel?: string;
+    typeDescription?: string;
 }
 
 interface Link {
@@ -46,6 +48,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
     });
     const [dimensions, setDimensions] = useState({ width: 0, height: 400 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const { appearance = 'system' } = useAppearance();
 
     useEffect(() => {
         // Update dimensions on mount and resize
@@ -75,6 +78,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
             type: 'issue',
             val: 20,
             color: nodeColors.issue,
+            typeDescription: 'Issue Key',
         });
 
         // Project node
@@ -85,6 +89,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 type: 'project',
                 val: 15,
                 color: nodeColors.project,
+                typeDescription: 'Project',
             });
             links.push({
                 source: data.key,
@@ -101,6 +106,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 type: 'issuetype',
                 val: 12,
                 color: nodeColors.issuetype,
+                typeDescription: 'Issue Type',
             });
             links.push({
                 source: data.key,
@@ -117,6 +123,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 type: 'priority',
                 val: 12,
                 color: nodeColors.priority,
+                typeDescription: 'Priority',
             });
             links.push({
                 source: data.key,
@@ -133,6 +140,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 type: 'status',
                 val: 12,
                 color: nodeColors.status,
+                typeDescription: 'Status',
             });
             links.push({
                 source: data.key,
@@ -149,6 +157,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 type: 'reporter',
                 val: 12,
                 color: nodeColors.reporter,
+                typeDescription: 'Reporter',
             });
             links.push({
                 source: data.key,
@@ -159,12 +168,12 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
 
         // Component nodes with group
         if (data.components && data.components.length > 0) {
-            // Add components group node
+            // Add components group node with count
             nodes.push({
                 id: 'components-group',
-                label: 'Components',
+                label: `${data.components.length.toString()}\nComponents`,
                 type: 'component',
-                val: 15,
+                val: 20,
                 color: nodeColors.component,
             });
             links.push({
@@ -173,13 +182,13 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 label: 'affected components',
             });
 
-            // Add individual component nodes
+            // Add individual component nodes without labels
             data.components.forEach((component) => {
                 nodes.push({
                     id: `component-${component}`,
                     label: component,
                     type: 'component',
-                    val: 8,
+                    val: 6,
                     color: nodeColors.component,
                 });
                 links.push({
@@ -243,7 +252,12 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                 graphData={graphData}
                 width={dimensions.width}
                 height={dimensions.height}
-                nodeLabel={(node: any) => node.originalLabel || node.label}
+                nodeLabel={(node: any) => {
+                    if (node.typeDescription && node.label) {
+                        return `${node.typeDescription}: ${node.label}`;
+                    }
+                    return node.originalLabel || node.label;
+                }}
                 nodeAutoColorBy="type"
                 onNodeDragEnd={(node: any) => {
                     node.fx = node.x;
@@ -273,11 +287,28 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
 
                     // Only draw label if it exists
                     if (label) {
-                        // For methods-group, draw text inside the circle
-                        if (node.id === 'methods-group') {
+                        // Check if this is a component or method child node (without typeDescription)
+                        const isComponentChild =
+                            node.type === 'component' &&
+                            !node.typeDescription &&
+                            node.id !== 'components-group';
+                        const isMethodChild =
+                            node.type === 'method' &&
+                            !node.originalLabel &&
+                            node.id !== 'methods-group';
+
+                        // Draw text inside the circle for group nodes and main nodes with typeDescription
+                        if (
+                            node.id === 'methods-group' ||
+                            node.id === 'components-group' ||
+                            node.typeDescription
+                        ) {
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
-                            ctx.fillStyle = '#ffffff';
+                            ctx.fillStyle =
+                                appearance === 'dark' || appearance === 'system'
+                                    ? '#ffffff'
+                                    : '#1e293b';
                             ctx.font = `bold ${fontSize * 1.2}px Sans-Serif`;
 
                             // Split label by newline and draw each line
@@ -294,8 +325,8 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                                     startY + i * lineHeight,
                                 );
                             });
-                        } else {
-                            // For other nodes, draw label below
+                        } else if (isComponentChild) {
+                            // For component children, draw label below
                             const textWidth = ctx.measureText(label).width;
                             const bckgDimensions = [textWidth, fontSize].map(
                                 (n) => n + fontSize * 0.4,
@@ -323,6 +354,7 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
                                     bckgDimensions[1] / 2,
                             );
                         }
+                        // Method children without label are not drawn (empty label)
                     }
                 }}
                 linkLabel="label"
