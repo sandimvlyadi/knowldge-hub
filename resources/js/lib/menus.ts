@@ -1,13 +1,15 @@
 import { dashboard } from '@/routes';
 import issues from '@/routes/issues';
+import libraries from '@/routes/libraries';
 import master from '@/routes/master';
 import { NavItem } from '@/types';
 import {
-    BugIcon,
-    CirclePlusIcon,
+    CircleFadingArrowUpIcon,
     DatabaseIcon,
     FolderGit2Icon,
     LayoutGridIcon,
+    LibraryIcon,
+    MessageCircleCodeIcon,
     TagsIcon,
     TriangleAlertIcon,
     UserSearchIcon,
@@ -22,7 +24,12 @@ export const menus: NavItem[] = [
     {
         title: 'Issues',
         href: issues.index.url(),
-        icon: BugIcon,
+        icon: MessageCircleCodeIcon,
+    },
+    {
+        title: 'Libraries',
+        href: libraries.index.url(),
+        icon: LibraryIcon,
     },
     {
         title: 'Master',
@@ -47,7 +54,7 @@ export const menus: NavItem[] = [
             {
                 title: 'Statuses',
                 href: master.statuses.index.url(),
-                icon: CirclePlusIcon,
+                icon: CircleFadingArrowUpIcon,
             },
             {
                 title: 'Reporters',

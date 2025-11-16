@@ -27,8 +27,15 @@ class Library extends Model
         'deleted_at',
     ];
 
+    protected $appends = ['used_in_issues_count'];
+
     public function issues()
     {
         return $this->belongsToMany(Issue::class, 'issue_library', 'library_name', 'issue_key', 'name', 'key');
+    }
+
+    public function getUsedInIssuesCountAttribute(): int
+    {
+        return $this->issues()->count();
     }
 }
