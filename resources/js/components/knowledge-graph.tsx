@@ -156,38 +156,68 @@ export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
             });
         }
 
-        // Component nodes
+        // Component nodes with group
         if (data.components && data.components.length > 0) {
+            // Add components group node
+            nodes.push({
+                id: 'components-group',
+                label: 'Components',
+                type: 'component',
+                val: 15,
+                color: nodeColors.component,
+            });
+            links.push({
+                source: data.key,
+                target: 'components-group',
+                label: 'has components',
+            });
+
+            // Add individual component nodes
             data.components.forEach((component) => {
                 nodes.push({
                     id: `component-${component}`,
                     label: component,
                     type: 'component',
-                    val: 10,
+                    val: 8,
                     color: nodeColors.component,
                 });
                 links.push({
-                    source: data.key,
+                    source: 'components-group',
                     target: `component-${component}`,
-                    label: 'component',
+                    label: '',
                 });
             });
         }
 
-        // Method nodes
+        // Method nodes with group
         if (data.methods && data.methods.length > 0) {
+            // Add methods group node
+            nodes.push({
+                id: 'methods-group',
+                label: 'Methods',
+                type: 'method',
+                val: 15,
+                color: nodeColors.method,
+            });
+            links.push({
+                source: data.key,
+                target: 'methods-group',
+                label: 'uses methods',
+            });
+
+            // Add individual method nodes
             data.methods.forEach((method) => {
                 nodes.push({
                     id: `method-${method}`,
                     label: method,
                     type: 'method',
-                    val: 10,
+                    val: 8,
                     color: nodeColors.method,
                 });
                 links.push({
-                    source: data.key,
+                    source: 'methods-group',
                     target: `method-${method}`,
-                    label: 'uses',
+                    label: '',
                 });
             });
         }
