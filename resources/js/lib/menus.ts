@@ -10,6 +10,7 @@ import {
     LayoutGridIcon,
     TagsIcon,
     TriangleAlertIcon,
+    UserSearchIcon,
 } from 'lucide-react';
 
 export const menus: NavItem[] = [
@@ -47,6 +48,11 @@ export const menus: NavItem[] = [
                 title: 'Statuses',
                 href: master.statuses.index.url(),
                 icon: CirclePlusIcon,
+            },
+            {
+                title: 'Reporters',
+                href: master.reporters.index.url(),
+                icon: UserSearchIcon,
             },
         ],
     },

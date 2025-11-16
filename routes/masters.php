@@ -3,6 +3,7 @@
 use App\Http\Controllers\Master\MasterIssueTypeController;
 use App\Http\Controllers\Master\MasterPriorityController;
 use App\Http\Controllers\Master\MasterProjectController;
+use App\Http\Controllers\Master\MasterReporterController;
 use App\Http\Controllers\Master\MasterStatusController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -30,4 +31,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('master/statuses', MasterStatusController::class)->parameters([
         'statuses' => 'record',
     ])->except(['create', 'show', 'edit'])->names('master.statuses')->withTrashed();
+
+    Route::get('master/reporters/data', [MasterReporterController::class, 'data'])->name('master.reporters.data');
+    Route::get('master/reporters/option', [MasterReporterController::class, 'option'])->name('master.reporters.option');
+    Route::resource('master/reporters', MasterReporterController::class)->parameters([
+        'reporters' => 'record',
+    ])->except(['create', 'show', 'edit'])->names('master.reporters')->withTrashed();
 });

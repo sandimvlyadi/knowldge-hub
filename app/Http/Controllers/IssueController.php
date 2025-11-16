@@ -19,6 +19,7 @@ class IssueController extends Controller
     {
         $startAt = $request->query('startAt', 0);
         $maxResults = $request->query('maxResults', 10);
+        $search = $request->input('query', null);
 
         // Get filter parameters and ensure they are arrays
         $filters = [
@@ -26,6 +27,7 @@ class IssueController extends Controller
             'issueType' => GeneralHelper::EnsureArray($request->query('issueType', [])),
             'priority' => GeneralHelper::EnsureArray($request->query('priority', [])),
             'status' => GeneralHelper::EnsureArray($request->query('status', [])),
+            'reporter' => GeneralHelper::EnsureArray($request->query('reporter', [])),
         ];
 
         // Build query
@@ -39,6 +41,12 @@ class IssueController extends Controller
         ])->whereHas('libraries');
 
         // Apply filters
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('summary', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
         if (! empty($filters['project'])) {
             $query->whereHas('project', function ($q) use ($filters) {
                 $q->whereIn('name', $filters['project']);
@@ -60,6 +68,12 @@ class IssueController extends Controller
         if (! empty($filters['status'])) {
             $query->whereHas('status', function ($q) use ($filters) {
                 $q->whereIn('name', $filters['status']);
+            });
+        }
+
+        if (! empty($filters['reporter'])) {
+            $query->whereHas('reporter', function ($q) use ($filters) {
+                $q->whereIn('key', $filters['reporter']);
             });
         }
 

@@ -1,66 +1,54 @@
-import { DataTable } from '@/components/data-table';
+import { DataTable, PaginatedData } from '@/components/data-table';
 import AppLayout from '@/layouts/app-layout';
-import issues from '@/routes/issues';
-import { type BreadcrumbItem } from '@/types';
-import { IssuesResponse } from '@/types/issue';
-import { Head, router } from '@inertiajs/react';
+import master from '@/routes/master';
+import { PaginatedResponse, type BreadcrumbItem } from '@/types';
+import { MasterReporter as DataResponse } from '@/types/master';
+import { Head } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
-import { columns } from './partials/columns';
+import { createColumns } from './partials/columns';
 import Filters from './partials/filters';
+import Form from './partials/form';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Issues',
-        href: issues.index.url(),
+        title: 'Master',
+        href: '#',
+    },
+    {
+        title: 'Reporters',
+        href: master.reporters.index.url(),
     },
 ];
 
 interface FilterParams {
     query?: string;
-    project?: string[];
-    issueType?: string[];
-    priority?: string[];
-    status?: string[];
-    reporter?: string[];
 }
 
-function useIssuesData(
-    pageIndex: number,
-    pageSize: number,
+interface Props {
+    data: PaginatedResponse<DataResponse>;
+}
+
+function useMasterReporterData(
+    page: number,
+    perPage: number,
     filters: FilterParams,
 ) {
     return useQuery({
-        queryKey: ['issues', pageIndex, pageSize, filters],
+        queryKey: ['master-reporters', page, perPage, filters],
         queryFn: async () => {
-            const startAt = pageIndex * pageSize;
             const params: any = {
-                startAt,
-                maxResults: pageSize,
+                page,
+                per_page: perPage,
             };
 
             if (filters.query) {
                 params.query = filters.query;
             }
-            if (filters.project?.length) {
-                params.project = filters.project;
-            }
-            if (filters.issueType?.length) {
-                params.issueType = filters.issueType;
-            }
-            if (filters.priority?.length) {
-                params.priority = filters.priority;
-            }
-            if (filters.status?.length) {
-                params.status = filters.status;
-            }
-            if (filters.reporter?.length) {
-                params.reporter = filters.reporter;
-            }
 
-            const response = await axios.get<IssuesResponse>(
-                issues.data.url(),
+            const response = await axios.get<PaginatedResponse<DataResponse>>(
+                master.reporters.data.url(),
                 {
                     params,
                     withCredentials: true,
@@ -72,20 +60,20 @@ function useIssuesData(
     });
 }
 
-export default function IssuesIndex() {
+export default function MasterReporter(props: Props) {
+    const [state, setState] = useState<'add' | 'edit'>('add');
+    const [record, setRecord] = useState<DataResponse | null>(null);
+    const [openForm, setOpenForm] = useState(false);
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: 10,
     });
     const [filters, setFilters] = useState<FilterParams>({
-        project: [],
-        issueType: [],
-        priority: [],
-        status: [],
+        query: '',
     });
 
-    const { data, isLoading, isFetching } = useIssuesData(
-        pagination.pageIndex,
+    const { data, isLoading, isFetching } = useMasterReporterData(
+        pagination.pageIndex + 1,
         pagination.pageSize,
         filters,
     );
@@ -99,7 +87,7 @@ export default function IssuesIndex() {
     }, []);
 
     const handleFilterChange = useCallback(
-        (filterType: keyof FilterParams, values: string | string[]) => {
+        (filterType: keyof FilterParams, values: string) => {
             setFilters((prev) => ({
                 ...prev,
                 [filterType]: values,
@@ -110,24 +98,35 @@ export default function IssuesIndex() {
         [],
     );
 
-    const handleRowClick = useCallback((row: any) => {
-        router.visit(issues.key.url({ key: row.key }));
-    }, []);
-
-    const tableData = {
-        data: data?.issues ?? [],
+    const tableData: PaginatedData<DataResponse> = {
+        data: data?.data ?? [],
         total: data?.total ?? 0,
-        startAt: data?.startAt ?? 0,
-        maxResults: data?.maxResults ?? pagination.pageSize,
+        startAt: data?.from ? data.from - 1 : 0,
+        maxResults: data?.per_page ?? pagination.pageSize,
     };
+
+    const onAdd = () => {
+        setState('add');
+        setRecord(null);
+        setOpenForm(true);
+    };
+
+    const handleEdit = (record: DataResponse) => {
+        setState('edit');
+        setRecord(record);
+        setOpenForm(true);
+    };
+
+    const columns = createColumns(handleEdit);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Issues" />
+            <Head title="Master Reporters" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <Filters
                     filters={filters}
                     onFilterChange={handleFilterChange}
+                    onAdd={onAdd}
                 />
                 <DataTable
                     columns={columns}
@@ -135,9 +134,14 @@ export default function IssuesIndex() {
                     loading={isLoading || isFetching}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
-                    onRowClick={handleRowClick}
                 />
             </div>
+            <Form
+                state={state}
+                record={record}
+                open={openForm}
+                setOpen={setOpenForm}
+            />
         </AppLayout>
     );
 }
