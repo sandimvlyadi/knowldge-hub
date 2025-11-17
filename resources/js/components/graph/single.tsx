@@ -171,7 +171,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
             // Add components group node with count
             nodes.push({
                 id: 'components-group',
-                label: `${data.components.length.toString()}\nComponents`,
+                label: `${data.components.length.toString()}\nComponent${data.components.length > 1 ? 's' : ''}`,
                 type: 'component',
                 val: 20,
                 color: nodeColors.component,
@@ -204,7 +204,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
             // Add methods group node with count
             nodes.push({
                 id: 'methods-group',
-                label: `${data.methods.length.toString()}\nMethods`,
+                label: `${data.methods.length.toString()}\nMethod${data.methods.length > 1 ? 's' : ''}`,
                 type: 'method',
                 val: 20,
                 color: nodeColors.method,
@@ -215,11 +215,13 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: 'uses methods',
             });
 
-            // Add individual method nodes without labels
+            // Add individual method nodes
+            // Show labels only if total methods count is less than 10
+            const showMethodLabels = data.methods.length < 10;
             data.methods.forEach((method) => {
                 nodes.push({
                     id: `method-${method}`,
-                    label: '',
+                    label: showMethodLabels ? method : '',
                     type: 'method',
                     val: 6,
                     color: nodeColors.method,
@@ -294,7 +296,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                             node.id !== 'components-group';
                         const isMethodChild =
                             node.type === 'method' &&
-                            !node.originalLabel &&
+                            node.originalLabel &&
                             node.id !== 'methods-group';
 
                         // Draw text inside the circle for group nodes and main nodes with typeDescription
@@ -325,8 +327,8 @@ export function SingleGraph({ data }: SingleGraphProps) {
                                     startY + i * lineHeight,
                                 );
                             });
-                        } else if (isComponentChild) {
-                            // For component children, draw label below
+                        } else if (isComponentChild || isMethodChild) {
+                            // For component and method children (when showing labels), draw label below
                             const textWidth = ctx.measureText(label).width;
                             const bckgDimensions = [textWidth, fontSize].map(
                                 (n) => n + fontSize * 0.4,
@@ -354,7 +356,6 @@ export function SingleGraph({ data }: SingleGraphProps) {
                                     bckgDimensions[1] / 2,
                             );
                         }
-                        // Method children without label are not drawn (empty label)
                     }
                 }}
                 linkLabel="label"
