@@ -213,4 +213,52 @@ class IssueController extends Controller
             'graph' => $record->graph,
         ]);
     }
+
+    public function allGraphs(Request $request): JsonResponse
+    {
+        $startAt = $request->query('startAt', 0);
+        $maxResults = $request->query('maxResults', 10);
+
+        $issues = Issue::select([
+            'id',
+            'key',
+            'summary',
+            'description',
+            'components',
+            'ref_project_id',
+            'ref_issue_type_id',
+            'ref_priority_id',
+            'ref_status_id',
+            'ref_reporter_key',
+        ])
+            ->with([
+                'project:ref_id,name',
+                'issueType:ref_id,name',
+                'priority:ref_id,name',
+                'status:ref_id,name',
+                'reporter:key,display_name',
+                'libraries:name',
+            ])
+            ->whereHas('libraries')
+            ->skip($startAt)
+            ->take($maxResults)
+            ->get();
+
+        $allGraphs = $issues->map(function ($issue) {
+            return [
+                'key' => $issue->key,
+                'summary' => $issue->summary,
+                'description' => $issue->description,
+                'components' => $issue->components ? explode(',', $issue->components) : [],
+                'project' => $issue->project?->name,
+                'issuetype' => $issue->issueType?->name,
+                'priority' => $issue->priority?->name,
+                'status' => $issue->status?->name,
+                'reporter' => $issue->reporter?->display_name,
+                'methods' => $issue->libraries->pluck('name')->toArray(),
+            ];
+        });
+
+        return response()->json($allGraphs, 200);
+    }
 }
