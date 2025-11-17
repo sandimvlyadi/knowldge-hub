@@ -41,6 +41,8 @@ class Issue extends Model
         'deleted_at',
     ];
 
+    protected $appends = ['graph'];
+
     public function project()
     {
         return $this->belongsTo(MasterProject::class, 'ref_project_id', 'ref_id');
@@ -69,5 +71,21 @@ class Issue extends Model
     public function libraries()
     {
         return $this->belongsToMany(Library::class, 'issue_library', 'issue_key', 'library_name', 'key', 'name');
+    }
+
+    public function getGraphAttribute()
+    {
+        return [
+            'key' => $this->key,
+            'summary' => $this->summary,
+            'description' => $this->description,
+            'components' => $this->components ? explode(',', $this->components) : [],
+            'project' => $this->project ? $this->project->name : null,
+            'issuetype' => $this->issueType ? $this->issueType->name : null,
+            'priority' => $this->priority ? $this->priority->name : null,
+            'status' => $this->status ? $this->status->name : null,
+            'reporter' => $this->reporter ? $this->reporter->display_name : null,
+            'methods' => $this->libraries()->pluck('name')->toArray(),
+        ];
     }
 }

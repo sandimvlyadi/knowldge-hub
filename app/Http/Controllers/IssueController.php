@@ -208,22 +208,9 @@ class IssueController extends Controller
             'libraries',
         ])->where('key', $key)->firstOrFail();
 
-        $graph = [
-            'key' => $record->key,
-            'summary' => $record->summary,
-            'description' => $record->description,
-            'components' => $record->components ? explode(',', $record->components) : [],
-            'project' => $record->project ? $record->project->name : null,
-            'issuetype' => $record->issueType ? $record->issueType->name : null,
-            'priority' => $record->priority ? $record->priority->name : null,
-            'status' => $record->status ? $record->status->name : null,
-            'reporter' => $record->reporter ? $record->reporter->display_name : null,
-            'methods' => $record->libraries()->pluck('name')->toArray(),
-        ];
-
         return inertia('issues/detail', [
             'record' => $record,
-            'graph' => $graph,
+            'graph' => $record->graph,
         ]);
     }
 }
