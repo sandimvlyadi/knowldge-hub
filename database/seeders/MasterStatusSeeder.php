@@ -38,6 +38,18 @@ class MasterStatusSeeder extends Seeder
                     'color_name' => 'green',
                 ],
             ],
+            [
+                'ref_id' => 1,
+                'name' => 'Open',
+                'icon_url' => 'https://issues.apache.org/jira/images/icons/statuses/open.png',
+                'description' => 'The issue is open and ready for the assignee to start work on it.',
+                'status_category' => [
+                    'ref_id' => 2,
+                    'key' => 'new',
+                    'name' => 'To Do',
+                    'color_name' => 'blue-gray',
+                ],
+            ],
         ];
 
         foreach ($lists as $data) {

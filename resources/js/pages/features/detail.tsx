@@ -9,31 +9,31 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
-import issues from '@/routes/issues';
+import features from '@/routes/features';
 import { BreadcrumbItem } from '@/types';
+import { FeatureDetail } from '@/types/feature';
 import { Graph as GraphType } from '@/types/graph';
-import { IssueDetail } from '@/types/issue';
 import { Head } from '@inertiajs/react';
 import { MaximizeIcon } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
-    record: IssueDetail;
+    record: FeatureDetail;
     graph?: GraphType;
 }
 
-export default function IssuesDetail(props: Props) {
+export default function FeaturesDetail(props: Props) {
     const { record, graph } = props;
     const [openGraphDialog, setOpenGraphDialog] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Issues',
-            href: issues.index.url(),
+            title: 'Features',
+            href: features.index.url(),
         },
         {
             title: record.key,
-            href: issues.key.url({ key: record.key }),
+            href: features.key.url({ key: record.key }),
         },
     ];
 
@@ -45,7 +45,7 @@ export default function IssuesDetail(props: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={record.key} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {/* Issue Header */}
+                {/* Feature Header */}
                 <div className="border-b">
                     <div className="mb-4 flex items-start justify-between">
                         <div className="flex items-start gap-3">
@@ -61,7 +61,7 @@ export default function IssuesDetail(props: Props) {
                             <div>
                                 <div className="text-sm text-blue-600 dark:text-blue-400">
                                     <a
-                                        href={`https://issues.apache.org/jira/browse/${record.project?.key}`}
+                                        href={`https://features.apache.org/jira/browse/${record.project?.key}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="hover:underline"
@@ -69,14 +69,9 @@ export default function IssuesDetail(props: Props) {
                                         {record.project?.name}
                                     </a>{' '}
                                     /{' '}
-                                    <a
-                                        href={`https://issues.apache.org/jira/browse/${record.key}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="hover:underline"
-                                    >
+                                    <span className="font-semibold text-primary">
                                         {record.key}
-                                    </a>
+                                    </span>
                                 </div>
                                 <h1 className="text-xl font-semibold">
                                     {record.summary}
@@ -212,7 +207,7 @@ export default function IssuesDetail(props: Props) {
                         {/* Method Section */}
                         <div className="mb-6 rounded-lg border p-4">
                             <h4 className="mb-4 text-lg font-semibold">
-                                Methods
+                                Suggested Methods
                             </h4>
                             <div className="prose prose-sm flex max-h-75 max-w-none flex-col gap-2 overflow-auto text-sm font-medium">
                                 {record.libraries.length > 0 ? (
@@ -240,7 +235,7 @@ export default function IssuesDetail(props: Props) {
                                     ))
                                 ) : (
                                     <p className="text-muted-foreground">
-                                        No method provided
+                                        No suggested method provided
                                     </p>
                                 )}
                             </div>
@@ -305,7 +300,7 @@ export default function IssuesDetail(props: Props) {
                                 <div className="flex items-center gap-1">
                                     <span>
                                         {new Date(
-                                            record.created,
+                                            record.created_at,
                                         ).toLocaleDateString('en-US', {
                                             day: '2-digit',
                                             month: 'short',

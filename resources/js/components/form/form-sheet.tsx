@@ -3,6 +3,7 @@ import {
     Sheet,
     SheetClose,
     SheetContent,
+    SheetDescription,
     SheetFooter,
     SheetHeader,
     SheetTitle,
@@ -14,6 +15,7 @@ interface FormSheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
+    description?: string;
     children: ReactNode;
     onSave: () => void;
     onDelete?: () => void;
@@ -25,6 +27,7 @@ export function FormSheet({
     open,
     onOpenChange,
     title,
+    description,
     children,
     onSave,
     onDelete,
@@ -36,6 +39,7 @@ export function FormSheet({
             <SheetContent className="w-full md:w-2/3 lg:w-1/2 xl:w-2/5">
                 <SheetHeader className="shadow-lg">
                     <SheetTitle>{title}</SheetTitle>
+                    <SheetDescription>{description || ' '}</SheetDescription>
                 </SheetHeader>
                 <div className="grid gap-6 overflow-auto p-4">{children}</div>
                 <SheetFooter className="border-t-2">

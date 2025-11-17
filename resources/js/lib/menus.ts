@@ -1,4 +1,5 @@
 import { dashboard } from '@/routes';
+import features from '@/routes/features';
 import issues from '@/routes/issues';
 import libraries from '@/routes/libraries';
 import master from '@/routes/master';
@@ -6,6 +7,7 @@ import { NavItem } from '@/types';
 import {
     CircleFadingArrowUpIcon,
     DatabaseIcon,
+    FileCodeIcon,
     FolderGit2Icon,
     LayoutGridIcon,
     LibraryIcon,
@@ -20,6 +22,11 @@ export const menus: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGridIcon,
+    },
+    {
+        title: 'Features',
+        href: features.index.url(),
+        icon: FileCodeIcon,
     },
     {
         title: 'Issues',

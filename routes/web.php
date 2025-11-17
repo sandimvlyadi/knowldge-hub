@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LibraryController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    Route::get('features', [FeatureController::class, 'index'])->name('features.index');
+    Route::get('features/data', [FeatureController::class, 'data'])->name('features.data');
+    Route::get('features/all-graphs', [FeatureController::class, 'allGraphs'])->name('features.allGraphs');
+    Route::get('features/generate-key', [FeatureController::class, 'generateKey'])->name('features.generateKey');
+    Route::get('features/{key}', [FeatureController::class, 'key'])->name('features.key');
+    Route::resource('features', FeatureController::class)->parameters([
+        'features' => 'record',
+    ])->except(['create', 'show', 'edit'])->names('features')->withTrashed();
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::get('issues/data', [IssueController::class, 'data'])->name('issues.data');

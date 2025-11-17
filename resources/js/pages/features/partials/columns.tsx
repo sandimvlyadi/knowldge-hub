@@ -1,15 +1,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Issue } from '@/types/issue';
+import { Feature } from '@/types/feature';
 import { ColumnDef } from '@tanstack/react-table';
-import { SquareArrowOutUpRightIcon } from 'lucide-react';
+import { EditIcon, EyeIcon } from 'lucide-react';
 
-export const columns: ColumnDef<Issue>[] = [
+export const createColumns = (
+    onEdit: (record: Feature) => void,
+    onView: (record: Feature) => void,
+): ColumnDef<Feature>[] => [
     {
         accessorKey: 'project',
         header: 'Project',
@@ -31,21 +35,10 @@ export const columns: ColumnDef<Issue>[] = [
     },
     {
         accessorKey: 'key',
-        header: 'Issue Key',
+        header: 'Feature Key',
         cell: ({ row }) => {
-            const issue = row.original;
-            return issue.key;
-            return (
-                <a
-                    href={`https://issues.apache.org/jira/browse/${issue.key}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:underline"
-                >
-                    {issue.key}
-                    <SquareArrowOutUpRightIcon className="h-3 w-3 text-muted-foreground" />
-                </a>
-            );
+            const feature = row.original;
+            return feature.key;
         },
     },
     {
@@ -130,20 +123,20 @@ export const columns: ColumnDef<Issue>[] = [
         accessorKey: 'summary',
         header: 'Summary',
         cell: ({ row }) => {
-            const issue = row.original;
+            const feature = row.original;
             return (
                 <Tooltip>
                     <TooltipTrigger>
                         <span className="line-clamp-5 max-w-xs text-start whitespace-normal">
-                            {issue.fields.summary}
+                            {feature.fields.summary}
                         </span>
                     </TooltipTrigger>
                     <TooltipContent>
                         <div className="flex flex-col gap-1">
                             <span className="font-medium">
-                                {issue.fields.summary}
+                                {feature.fields.summary}
                             </span>
-                            <span>{issue.fields.description}</span>
+                            <span>{feature.fields.description}</span>
                         </div>
                     </TooltipContent>
                 </Tooltip>
@@ -203,7 +196,7 @@ export const columns: ColumnDef<Issue>[] = [
         accessorKey: 'created',
         header: 'Created',
         cell: ({ row }) => {
-            const created = new Date(row.original.fields.created);
+            const created = new Date(row.original.fields.created_at);
             return (
                 <span>
                     {created.toLocaleDateString(undefined, {
@@ -214,6 +207,33 @@ export const columns: ColumnDef<Issue>[] = [
                         minute: '2-digit',
                     })}
                 </span>
+            );
+        },
+    },
+    {
+        accessorKey: 'action',
+        header: '',
+        cell: ({ row }) => {
+            const record = row.original;
+            return (
+                <div className="flex items-center justify-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="cursor-pointer"
+                        onClick={() => onEdit(record)}
+                    >
+                        <EditIcon />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="cursor-pointer"
+                        onClick={() => onView(record)}
+                    >
+                        <EyeIcon />
+                    </Button>
+                </div>
             );
         },
     },
