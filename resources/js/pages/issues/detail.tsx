@@ -1,4 +1,4 @@
-import { KnowledgeGraph } from '@/components/knowledge-graph';
+import { SingleGraph } from '@/components/graph/single';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -246,12 +246,10 @@ export default function IssuesDetail(props: Props) {
                             </div>
                         </div>
 
-                        {/* Knowledge Graph Section */}
+                        {/* Graph Section */}
                         <div className="mb-6 rounded-lg border p-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="stext-lg font-semibold">
-                                    Knowledge Graph
-                                </h4>
+                                <h4 className="text-lg font-semibold">Graph</h4>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -263,7 +261,7 @@ export default function IssuesDetail(props: Props) {
                                 </Button>
                             </div>
                             {graph ? (
-                                <KnowledgeGraph data={graph} />
+                                <SingleGraph data={graph} />
                             ) : (
                                 <p className="text-sm text-muted-foreground">
                                     No graph data available
@@ -325,11 +323,11 @@ export default function IssuesDetail(props: Props) {
             <Dialog open={openGraphDialog} onOpenChange={toggleGraphDialog}>
                 <DialogContent className="!fixed !inset-0 !top-0 !left-0 m-0 h-screen w-screen !max-w-none !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 p-0">
                     <DialogHeader className="px-6 pt-6 pb-4">
-                        <DialogTitle>Knowledge Graph: {record.key}</DialogTitle>
+                        <DialogTitle>Graph: {record.key}</DialogTitle>
                     </DialogHeader>
                     <div className="flex-1 overflow-hidden px-6 pb-6">
                         {graph ? (
-                            <KnowledgeGraph data={graph} />
+                            <SingleGraph data={graph} />
                         ) : (
                             <p className="text-sm text-muted-foreground">
                                 No graph data available

@@ -25,7 +25,7 @@ interface GraphData {
     links: Link[];
 }
 
-interface KnowledgeGraphProps {
+interface SingleGraphProps {
     data: Graph;
 }
 
@@ -40,7 +40,7 @@ const nodeColors: Record<string, string> = {
     method: '#f97316', // orange
 };
 
-export function KnowledgeGraph({ data }: KnowledgeGraphProps) {
+export function SingleGraph({ data }: SingleGraphProps) {
     const graphRef = useRef<any>(null);
     const [graphData, setGraphData] = useState<GraphData>({
         nodes: [],
