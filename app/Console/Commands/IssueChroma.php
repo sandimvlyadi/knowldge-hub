@@ -117,19 +117,50 @@ class IssueChroma extends Command
                     $description = "{$issue->summary}. ".($issue->description ?? '');
                     $description = trim($description);
 
-                    $result = $chromadb->items()->addWithEmbeddings(
-                        collectionId: $collectionId,
-                        documents: [$description],
-                        embeddingFunction: $embedder,
-                        ids: [$issue->key],
-                        metadatas: [[
+                    $maxChunkSize = 16384;
+                    $chunks = [];
+                    $ids = [];
+                    $metadatas = [];
+
+                    if (strlen($description) > $maxChunkSize) {
+                        // Split description into chunks
+                        $numChunks = ceil(strlen($description) / $maxChunkSize);
+
+                        for ($i = 0; $i < $numChunks; $i++) {
+                            $chunk = substr($description, $i * $maxChunkSize, $maxChunkSize);
+                            $chunks[] = $chunk;
+                            $ids[] = "{$issue->key}_chunk_".($i + 1);
+                            $metadatas[] = [
+                                'issue_id' => $issue->id,
+                                'project' => $issue->project->ref_id,
+                                'issue_type' => $issue->issueType->ref_id,
+                                'priority' => $issue->priority->ref_id,
+                                'status' => $issue->status->ref_id,
+                                'reporter' => $issue->reporter->key,
+                                'chunk_index' => $i + 1,
+                                'total_chunks' => $numChunks,
+                            ];
+                        }
+                    } else {
+                        // No chunking needed
+                        $chunks = [$description];
+                        $ids = [$issue->key];
+                        $metadatas = [[
                             'issue_id' => $issue->id,
                             'project' => $issue->project->ref_id,
                             'issue_type' => $issue->issueType->ref_id,
                             'priority' => $issue->priority->ref_id,
                             'status' => $issue->status->ref_id,
                             'reporter' => $issue->reporter->key,
-                        ]]
+                        ]];
+                    }
+
+                    $result = $chromadb->items()->addWithEmbeddings(
+                        collectionId: $collectionId,
+                        documents: $chunks,
+                        embeddingFunction: $embedder,
+                        ids: $ids,
+                        metadatas: $metadatas
                     );
 
                     if ($result->failed()) {
