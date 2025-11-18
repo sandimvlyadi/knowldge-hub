@@ -30,6 +30,7 @@ class Issue extends Model
         'ref_priority_id',
         'ref_status_id',
         'ref_reporter_key',
+        'chromadb_stored',
     ];
 
     protected $hidden = [
@@ -39,6 +40,10 @@ class Issue extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+    ];
+
+    protected $casts = [
+        'chromadb_stored' => 'boolean',
     ];
 
     protected $appends = ['graph'];
