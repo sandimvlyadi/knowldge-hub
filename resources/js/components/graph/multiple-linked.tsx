@@ -579,9 +579,10 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                           ? '#ef4444'
                           : '#94a3b8'
                 }
-                linkWidth={(link: any) =>
-                    link.distance !== undefined ? 4 : link.isCrossGraph ? 3 : 2
-                }
+                // linkWidth={(link: any) =>
+                //     link.distance !== undefined ? 4 : link.isCrossGraph ? 3 : 2
+                // }
+                linkWidth={2}
                 linkLineDash={(link: any) =>
                     link.distance !== undefined
                         ? [10, 5]
