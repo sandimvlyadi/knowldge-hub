@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('features/all-graphs', [FeatureController::class, 'allGraphs'])->name('features.allGraphs');
     Route::get('features/generate-key', [FeatureController::class, 'generateKey'])->name('features.generateKey');
     Route::get('features/{key}', [FeatureController::class, 'key'])->name('features.key');
+    Route::get('features/{key}/suggestion', [FeatureController::class, 'suggestion'])->name('features.key.suggestion');
     Route::resource('features', FeatureController::class)->parameters([
         'features' => 'record',
     ])->except(['create', 'show', 'edit'])->names('features')->withTrashed();

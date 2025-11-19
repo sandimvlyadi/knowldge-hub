@@ -16,6 +16,7 @@ import { Graph as GraphType } from '@/types/graph';
 import { Head } from '@inertiajs/react';
 import { MaximizeIcon } from 'lucide-react';
 import { useState } from 'react';
+import FeatureSuggestion from './partials/suggestion';
 
 interface Props {
     record: FeatureDetail;
@@ -182,6 +183,9 @@ export default function FeaturesDetail(props: Props) {
                                 </li>
                             </ul>
                         </div>
+
+                        {/* Suggestion Section */}
+                        <FeatureSuggestion record={record} />
 
                         {/* Description Section */}
                         <div className="rounded-lg border p-4">

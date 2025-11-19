@@ -6,6 +6,9 @@ use App\Helpers\GeneralHelper;
 use App\Http\Requests\Feature\StoreFeatureRequest;
 use App\Http\Requests\Feature\UpdateFeatureRequest;
 use App\Models\Feature;
+use App\Models\Issue;
+use HelgeSverre\Chromadb\Embeddings\Embeddings;
+use HelgeSverre\Chromadb\Facades\Chromadb;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -334,5 +337,107 @@ class FeatureController extends Controller
         } while (Feature::withTrashed()->where('key', $key)->exists());
 
         return response()->json(['key' => $key], 200);
+    }
+
+    public function suggestion($key): JsonResponse
+    {
+        $record = Feature::with([
+            'project',
+            'issueType',
+            'priority',
+            'status.statusCategory',
+            'reporter',
+            'libraries',
+        ])->where('key', $key)->firstOrFail();
+
+        $embedder = Embeddings::fromConfig();
+        $chromadb = Chromadb::client()->withEmbeddings(embeddingFunction: $embedder);
+        $collection = $chromadb->collections()->get(collectionName: 'issues_collection');
+
+        if ($collection->failed()) {
+            return response()->json($collection->json(), 500);
+        }
+
+        $collectionId = $collection->json('id');
+        $description = "{$record->summary}. ".($record->description ?? '');
+        $description = trim($description);
+
+        $res = $chromadb->items()->queryWithText(
+            collectionId: $collectionId,
+            queryText: $description,
+            embeddingFunction: $embedder,
+            nResults: 10,
+            include: ['documents', 'metadatas', 'distances'],
+            where: [
+                'project' => $record->project?->ref_id,
+            ]
+        );
+
+        if ($res->failed()) {
+            return response()->json($res->json(), 500);
+        }
+
+        $distance_threshold = 1.0;
+        $json = $res->json();
+        $ids = $json['ids'][0];
+        $distances = $json['distances'][0];
+
+        $selected = [];
+        foreach ($ids as $index => $id) {
+            if ($distances[$index] > $distance_threshold) {
+                continue;
+            }
+
+            $selected[] = [
+                'id' => $id,
+                'distance' => $distances[$index],
+            ];
+        }
+
+        $issues = Issue::select([
+            'id',
+            'key',
+            'summary',
+            'description',
+            'components',
+            'ref_project_id',
+            'ref_issue_type_id',
+            'ref_priority_id',
+            'ref_status_id',
+            'ref_reporter_key',
+        ])
+            ->with([
+                'project:ref_id,name',
+                'issueType:ref_id,name',
+                'priority:ref_id,name',
+                'status:ref_id,name',
+                'reporter:key,display_name',
+                'libraries:name',
+            ])
+            ->whereIn('key', collect($selected)->pluck('id')->toArray())
+            ->get();
+
+        $suggestionGraphs = $issues->map(function ($issue) use ($selected) {
+            return [
+                'key' => $issue->key,
+                'summary' => $issue->summary,
+                'description' => $issue->description,
+                'components' => $issue->components ? explode(',', $issue->components) : [],
+                'project' => $issue->project?->name,
+                'issuetype' => $issue->issueType?->name,
+                'priority' => $issue->priority?->name,
+                'status' => $issue->status?->name,
+                'reporter' => $issue->reporter?->display_name,
+                'methods' => $issue->libraries->pluck('name')->toArray(),
+                'distance' => collect($selected)->firstWhere('id', $issue->key)['distance'] ?? null,
+            ];
+        });
+
+        $suggestionGraphs = $suggestionGraphs->sortBy('distance')->values();
+
+        return response()->json([
+            'graph' => $record->graph,
+            'suggestions' => $suggestionGraphs,
+        ], 200);
     }
 }

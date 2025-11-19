@@ -9,4 +9,5 @@ export interface Graph {
     status?: string;
     reporter?: string;
     methods?: string[];
+    distance?: number;
 }
