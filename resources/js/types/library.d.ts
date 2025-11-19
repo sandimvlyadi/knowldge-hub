@@ -4,4 +4,5 @@ export interface Library {
     url: string;
     description: string;
     used_in_issues_count?: number;
+    distance?: number;
 }

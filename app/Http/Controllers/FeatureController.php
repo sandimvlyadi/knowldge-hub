@@ -7,6 +7,7 @@ use App\Http\Requests\Feature\StoreFeatureRequest;
 use App\Http\Requests\Feature\UpdateFeatureRequest;
 use App\Models\Feature;
 use App\Models\Issue;
+use App\Models\Library;
 use HelgeSverre\Chromadb\Embeddings\Embeddings;
 use HelgeSverre\Chromadb\Facades\Chromadb;
 use Illuminate\Http\JsonResponse;
@@ -435,9 +436,35 @@ class FeatureController extends Controller
 
         $suggestionGraphs = $suggestionGraphs->sortBy('distance')->values();
 
+        $libraries = $suggestionGraphs
+            ->pluck('methods')
+            ->flatten()
+            ->unique()
+            ->map(function ($methodName) use ($suggestionGraphs) {
+                $library = Library::where('name', $methodName)->first();
+
+                // Find minimum distance for this method across all suggestions
+                $minDistance = $suggestionGraphs
+                    ->filter(fn ($s) => in_array($methodName, $s['methods']))
+                    ->min('distance');
+
+                return array_merge(
+                    $library ? $library->toArray() : ['name' => $methodName],
+                    ['distance' => $minDistance]
+                );
+            })
+            ->values()
+            ->toArray();
+
+        $libraries = collect($libraries)->sortBy([
+            ['distance', 'asc'],
+            ['used_in_issues_count', 'desc'],
+        ])->values()->toArray();
+
         return response()->json([
             'graph' => $record->graph,
             'suggestions' => $suggestionGraphs,
+            'libraries' => $libraries,
         ], 200);
     }
 }

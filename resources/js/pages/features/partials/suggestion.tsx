@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import features from '@/routes/features';
 import { FeatureDetail } from '@/types/feature';
 import { Graph as GraphType } from '@/types/graph';
+import { Library } from '@/types/library';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { MaximizeIcon } from 'lucide-react';
@@ -17,6 +18,7 @@ interface Props {
 interface SuggestionDataProps {
     graph: GraphType;
     suggestions: GraphType[];
+    libraries: Library[];
 }
 
 function useFeatureSuggestionData(key: string) {
@@ -46,6 +48,19 @@ export default function FeatureSuggestion(props: Props) {
         setOpenDialog(!openDialog);
     };
 
+    const renderGraphs = (data: SuggestionDataProps | undefined) => {
+        if (!data || data.suggestions.length === 0) {
+            return (
+                <div className="text-sm text-muted-foreground">
+                    No suggestion graphs available.
+                </div>
+            );
+        }
+
+        const combine = [data.graph, ...data.suggestions];
+        return <MultipleLinkedGraph data={combine} />;
+    };
+
     if (isLoading || isFetching) {
         return <Skeleton className="mb-6 h-[150px] rounded-lg" />;
     }
@@ -60,19 +75,6 @@ export default function FeatureSuggestion(props: Props) {
             </div>
         );
     }
-
-    const renderGraphs = (data: SuggestionDataProps | undefined) => {
-        if (!data || data.suggestions.length === 0) {
-            return (
-                <div className="text-sm text-muted-foreground">
-                    No suggestion graphs available.
-                </div>
-            );
-        }
-
-        const combine = [data.graph, ...data.suggestions];
-        return <MultipleLinkedGraph data={combine} />;
-    };
 
     return (
         <div className="mb-6 rounded-lg border p-4">
