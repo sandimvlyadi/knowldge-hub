@@ -1,5 +1,7 @@
 import { useAppearance } from '@/hooks/use-appearance';
+import { NODE_COLORS, getNodeColor } from '@/lib/graph-constants';
 import { Graph } from '@/types/graph';
+import { SquareIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
 import ForceGraph2D from 'react-force-graph-2d';
@@ -28,17 +30,6 @@ interface GraphData {
 interface SingleGraphProps {
     data: Graph;
 }
-
-const nodeColors: Record<string, string> = {
-    issue: '#3b82f6', // blue
-    project: '#8b5cf6', // purple
-    issuetype: '#ec4899', // pink
-    priority: '#f59e0b', // amber
-    status: '#10b981', // green
-    reporter: '#06b6d4', // cyan
-    component: '#6366f1', // indigo
-    method: '#f97316', // orange
-};
 
 export function SingleGraph({ data }: SingleGraphProps) {
     const graphRef = useRef<any>(null);
@@ -77,7 +68,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
             label: data.key,
             type: 'issue',
             val: 20,
-            color: nodeColors.issue,
+            color: getNodeColor('issue'),
             typeDescription: 'Issue Key',
         });
 
@@ -88,7 +79,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: data.project,
                 type: 'project',
                 val: 15,
-                color: nodeColors.project,
+                color: getNodeColor('project'),
                 typeDescription: 'Project',
             });
             links.push({
@@ -105,7 +96,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: data.issuetype,
                 type: 'issuetype',
                 val: 12,
-                color: nodeColors.issuetype,
+                color: getNodeColor('issuetype'),
                 typeDescription: 'Issue Type',
             });
             links.push({
@@ -122,7 +113,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: data.priority,
                 type: 'priority',
                 val: 12,
-                color: nodeColors.priority,
+                color: getNodeColor('priority'),
                 typeDescription: 'Priority',
             });
             links.push({
@@ -139,7 +130,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: data.status,
                 type: 'status',
                 val: 12,
-                color: nodeColors.status,
+                color: getNodeColor('status'),
                 typeDescription: 'Status',
             });
             links.push({
@@ -156,7 +147,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: data.reporter,
                 type: 'reporter',
                 val: 12,
-                color: nodeColors.reporter,
+                color: getNodeColor('reporter'),
                 typeDescription: 'Reporter',
             });
             links.push({
@@ -174,7 +165,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: `${data.components.length.toString()}\nComponent${data.components.length > 1 ? 's' : ''}`,
                 type: 'component',
                 val: 20,
-                color: nodeColors.component,
+                color: getNodeColor('component'),
             });
             links.push({
                 source: data.key,
@@ -189,7 +180,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                     label: component,
                     type: 'component',
                     val: 6,
-                    color: nodeColors.component,
+                    color: getNodeColor('component'),
                 });
                 links.push({
                     source: 'components-group',
@@ -207,7 +198,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                 label: `${data.methods.length.toString()}\nMethod${data.methods.length > 1 ? 's' : ''}`,
                 type: 'method',
                 val: 20,
-                color: nodeColors.method,
+                color: getNodeColor('method'),
             });
             links.push({
                 source: data.key,
@@ -224,7 +215,7 @@ export function SingleGraph({ data }: SingleGraphProps) {
                     label: showMethodLabels ? method : '',
                     type: 'method',
                     val: 6,
-                    color: nodeColors.method,
+                    color: getNodeColor('method'),
                     originalLabel: method,
                 });
                 links.push({
@@ -248,7 +239,19 @@ export function SingleGraph({ data }: SingleGraphProps) {
     }, [graphData]);
 
     return (
-        <div ref={containerRef} className="h-full w-full">
+        <div ref={containerRef} className="relative h-full w-full">
+            <div className="absolute z-10 flex flex-col gap-1 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md hover:opacity-75 dark:bg-slate-600">
+                {Object.entries(NODE_COLORS).map(([type, config]) => (
+                    <div key={type} className="flex items-center gap-1">
+                        <SquareIcon
+                            fill={config.color}
+                            stroke={config.color}
+                            className="h-4 w-4"
+                        />
+                        <span className="font-semibold">{config.label}</span>
+                    </div>
+                ))}
+            </div>
             <ForceGraph2D
                 ref={graphRef}
                 graphData={graphData}

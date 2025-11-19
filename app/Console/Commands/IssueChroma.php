@@ -54,8 +54,7 @@ class IssueChroma extends Command
         $startAt = 0;
         $maxResults = 10;
 
-        $totalIssues = Issue::whereHas('libraries')
-            ->where('chromadb_stored', false)
+        $totalIssues = Issue::where('chromadb_stored', false)
             ->count();
         $this->info("Total issues to process: {$totalIssues}");
         $bar = $this->output->createProgressBar($totalIssues);
@@ -87,7 +86,7 @@ class IssueChroma extends Command
                     'reporter:key,display_name',
                     'libraries:name',
                 ])
-                ->whereHas('libraries')
+                // ->whereHas('libraries')
                 ->where('chromadb_stored', false)
                 ->orderBy('length_description', 'asc')
                 ->skip($startAt)

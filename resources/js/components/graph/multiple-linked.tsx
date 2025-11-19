@@ -1,5 +1,7 @@
 import { useAppearance } from '@/hooks/use-appearance';
+import { NODE_COLORS, getNodeColor } from '@/lib/graph-constants';
 import { Graph } from '@/types/graph';
+import { SquareIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
 import ForceGraph2D from 'react-force-graph-2d';
@@ -30,17 +32,6 @@ interface GraphData {
 interface MultipleLinkedGraphProps {
     data: Graph[];
 }
-
-const nodeColors: Record<string, string> = {
-    issue: '#3b82f6', // blue
-    project: '#8b5cf6', // purple
-    issuetype: '#ec4899', // pink
-    priority: '#f59e0b', // amber
-    status: '#10b981', // green
-    reporter: '#06b6d4', // cyan
-    component: '#6366f1', // indigo
-    method: '#f97316', // orange
-};
 
 export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     const graphRef = useRef<any>(null);
@@ -91,7 +82,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 label: graphItem.key,
                 type: 'issue',
                 val: 20,
-                color: nodeColors.issue,
+                color: getNodeColor('issue'),
                 typeDescription: 'Issue Key',
                 graphIndex,
             });
@@ -108,7 +99,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                         label: graphItem.project,
                         type: 'project',
                         val: 18,
-                        color: nodeColors.project,
+                        color: getNodeColor('project'),
                         typeDescription: 'Project',
                     });
                 }
@@ -134,7 +125,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     label: graphItem.issuetype,
                     type: 'issuetype',
                     val: 12,
-                    color: nodeColors.issuetype,
+                    color: getNodeColor('issuetype'),
                     typeDescription: 'Issue Type',
                 });
 
@@ -161,7 +152,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     label: graphItem.priority,
                     type: 'priority',
                     val: 12,
-                    color: nodeColors.priority,
+                    color: getNodeColor('priority'),
                     typeDescription: 'Priority',
                 });
 
@@ -188,7 +179,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     label: graphItem.status,
                     type: 'status',
                     val: 12,
-                    color: nodeColors.status,
+                    color: getNodeColor('status'),
                     typeDescription: 'Status',
                 });
 
@@ -217,7 +208,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                         label: graphItem.reporter,
                         type: 'reporter',
                         val: 15,
-                        color: nodeColors.reporter,
+                        color: getNodeColor('reporter'),
                         typeDescription: 'Reporter',
                     });
                 }
@@ -241,7 +232,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     label: `${graphItem.components.length.toString()}\nComponent${graphItem.components.length > 1 ? 's' : ''}`,
                     type: 'component',
                     val: 20,
-                    color: nodeColors.component,
+                    color: getNodeColor('component'),
                 });
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -259,7 +250,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                         label: component,
                         type: 'component',
                         val: 6,
-                        color: nodeColors.component,
+                        color: getNodeColor('component'),
                         originalLabel: component,
                     });
 
@@ -285,7 +276,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     label: `${graphItem.methods.length.toString()}\nMethod${graphItem.methods.length > 1 ? 's' : ''}`,
                     type: 'method',
                     val: 20,
-                    color: nodeColors.method,
+                    color: getNodeColor('method'),
                 });
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -304,7 +295,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                         label: showMethodLabels ? method : '',
                         type: 'method',
                         val: 6,
-                        color: nodeColors.method,
+                        color: getNodeColor('method'),
                         originalLabel: method,
                     });
 
@@ -353,7 +344,19 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     }, [graphData]);
 
     return (
-        <div ref={containerRef} className="h-full w-full">
+        <div ref={containerRef} className="relative h-full w-full">
+            <div className="absolute z-10 flex flex-col gap-1 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md hover:opacity-75 dark:bg-slate-600">
+                {Object.entries(NODE_COLORS).map(([type, config]) => (
+                    <div key={type} className="flex items-center gap-1">
+                        <SquareIcon
+                            fill={config.color}
+                            stroke={config.color}
+                            className="h-4 w-4"
+                        />
+                        <span className="font-semibold">{config.label}</span>
+                    </div>
+                ))}
+            </div>
             <ForceGraph2D
                 ref={graphRef}
                 graphData={graphData}
