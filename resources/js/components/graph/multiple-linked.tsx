@@ -1,7 +1,7 @@
 import { useAppearance } from '@/hooks/use-appearance';
 import { NODE_COLORS, getNodeColor } from '@/lib/graph-constants';
 import { Graph } from '@/types/graph';
-import { SquareIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, SquareIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 // @ts-ignore
 import ForceGraph2D from 'react-force-graph-2d';
@@ -15,6 +15,7 @@ interface Node {
     originalLabel?: string;
     typeDescription?: string;
     graphIndex?: number;
+    opacity?: number;
 }
 
 interface Link {
@@ -22,6 +23,7 @@ interface Link {
     target: string;
     label: string;
     isCrossGraph?: boolean;
+    distance?: number;
 }
 
 interface GraphData {
@@ -42,6 +44,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     const [dimensions, setDimensions] = useState({ width: 0, height: 400 });
     const containerRef = useRef<HTMLDivElement>(null);
     const { appearance = 'system' } = useAppearance();
+    const [showLabels, setShowLabels] = useState(true);
 
     useEffect(() => {
         // Update dimensions on mount and resize
@@ -75,7 +78,22 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
             method: {},
         };
 
+        // Find max distance for opacity calculation
+        const maxDistance = Math.max(
+            ...data
+                .filter((item) => item.distance !== undefined)
+                .map((item) => item.distance!),
+            1, // Minimum value to avoid division by zero
+        );
+
         data.forEach((graphItem, graphIndex) => {
+            // Calculate opacity based on distance (0 distance = 100% opacity, max distance = lower opacity)
+            // First graph (index 0) always has 100% opacity
+            const opacity =
+                graphIndex === 0 || graphItem.distance === undefined
+                    ? 1.0
+                    : Math.max(0.3, 1 - graphItem.distance / maxDistance);
+
             // Central issue node for each graph
             nodes.push({
                 id: `${graphItem.key}-${graphIndex}`,
@@ -85,6 +103,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 color: getNodeColor('issue'),
                 typeDescription: 'Issue Key',
                 graphIndex,
+                opacity,
             });
 
             // Project node - shared across graphs
@@ -236,6 +255,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     type: 'component',
                     val: 20,
                     color: getNodeColor('component'),
+                    opacity,
                 });
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -278,6 +298,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     type: 'method',
                     val: 20,
                     color: getNodeColor('method'),
+                    opacity,
                 });
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -316,6 +337,21 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
         // Cross-graph links are now implicit through shared nodes
         // No need to create separate links between duplicate nodes since they're the same node
 
+        // Add distance links from first issue to other issues
+        // Distance represents the distance from each issue to the first issue (index 0)
+        data.forEach((graphItem, graphIndex) => {
+            if (graphItem.distance !== undefined && graphIndex > 0) {
+                // Link from first issue to this issue with distance
+                links.push({
+                    source: `${data[0].key}-0`,
+                    target: `${graphItem.key}-${graphIndex}`,
+                    label: `distance: ${graphItem.distance.toFixed(2)}`,
+                    isCrossGraph: true,
+                    distance: graphItem.distance,
+                });
+            }
+        });
+
         setGraphData({ nodes, links });
     }, [data]);
 
@@ -330,17 +366,35 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
 
     return (
         <div ref={containerRef} className="relative h-full w-full">
-            <div className="absolute z-10 flex flex-col gap-1 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md hover:opacity-75 dark:bg-slate-600">
-                {Object.entries(NODE_COLORS).map(([type, config]) => (
-                    <div key={type} className="flex items-center gap-1">
-                        <SquareIcon
-                            fill={config.color}
-                            stroke={config.color}
-                            className="h-4 w-4"
-                        />
-                        <span className="font-semibold">{config.label}</span>
-                    </div>
-                ))}
+            <div className="absolute z-10 flex flex-col gap-2">
+                <div className="flex flex-col gap-1 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md hover:opacity-75 dark:bg-slate-600">
+                    {Object.entries(NODE_COLORS).map(([type, config]) => (
+                        <div key={type} className="flex items-center gap-1">
+                            <SquareIcon
+                                fill={config.color}
+                                stroke={config.color}
+                                className="h-4 w-4"
+                            />
+                            <span className="font-semibold">
+                                {config.label}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={() => setShowLabels(!showLabels)}
+                    className="flex items-center gap-2 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md transition-opacity hover:opacity-75 dark:bg-slate-600"
+                    title={showLabels ? 'Hide labels' : 'Show labels'}
+                >
+                    {showLabels ? (
+                        <EyeIcon className="h-4 w-4" />
+                    ) : (
+                        <EyeOffIcon className="h-4 w-4" />
+                    )}
+                    <span className="font-semibold">
+                        {showLabels ? 'Hide Labels' : 'Show Labels'}
+                    </span>
+                </button>
             </div>
             <ForceGraph2D
                 ref={graphRef}
@@ -367,6 +421,11 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     const fontSize = 12 / globalScale;
                     ctx.font = `${fontSize}px Sans-Serif`;
 
+                    // Apply opacity for nodes with graphIndex (issue, component group, method group)
+                    const nodeOpacity =
+                        node.opacity !== undefined ? node.opacity : 1.0;
+                    ctx.globalAlpha = nodeOpacity;
+
                     // Draw node circle
                     ctx.fillStyle = node.color;
                     ctx.beginPath();
@@ -380,8 +439,8 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                     );
                     ctx.fill();
 
-                    // Only draw label if it exists
-                    if (label) {
+                    // Only draw label if it exists and showLabels is true
+                    if (label && showLabels) {
                         const isComponentChild =
                             node.type === 'component' &&
                             !node.typeDescription &&
@@ -446,24 +505,90 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                             );
                         }
                     }
+
+                    // Reset global alpha
+                    ctx.globalAlpha = 1.0;
                 }}
                 linkLabel="label"
                 linkColor={(link: any) =>
-                    link.isCrossGraph ? '#ef4444' : '#94a3b8'
+                    link.distance !== undefined
+                        ? '#10b981'
+                        : link.isCrossGraph
+                          ? '#ef4444'
+                          : '#94a3b8'
                 }
-                linkWidth={(link: any) => (link.isCrossGraph ? 3 : 2)}
+                linkWidth={(link: any) =>
+                    link.distance !== undefined ? 4 : link.isCrossGraph ? 3 : 2
+                }
                 linkLineDash={(link: any) =>
-                    link.isCrossGraph ? [5, 5] : null
+                    link.distance !== undefined
+                        ? [10, 5]
+                        : link.isCrossGraph
+                          ? [5, 5]
+                          : null
                 }
                 linkDirectionalParticles={(link: any) =>
-                    link.isCrossGraph ? 4 : 2
+                    link.distance !== undefined ? 6 : link.isCrossGraph ? 4 : 2
                 }
                 linkDirectionalParticleWidth={(link: any) =>
-                    link.isCrossGraph ? 3 : 2
+                    link.distance !== undefined ? 4 : link.isCrossGraph ? 3 : 2
                 }
                 linkDirectionalParticleColor={(link: any) =>
-                    link.isCrossGraph ? '#ef4444' : '#94a3b8'
+                    link.distance !== undefined
+                        ? '#10b981'
+                        : link.isCrossGraph
+                          ? '#ef4444'
+                          : '#94a3b8'
                 }
+                linkCanvasObjectMode={() => 'after'}
+                linkCanvasObject={(
+                    link: any,
+                    ctx: CanvasRenderingContext2D,
+                    globalScale: number,
+                ) => {
+                    if (link.distance !== undefined && showLabels) {
+                        const start = link.source;
+                        const end = link.target;
+                        const textPos = {
+                            x: start.x + (end.x - start.x) / 2,
+                            y: start.y + (end.y - start.y) / 2,
+                        };
+
+                        const label = `${link.distance.toFixed(2)}`;
+                        const fontSize = 14 / globalScale;
+                        ctx.font = `bold ${fontSize}px Sans-Serif`;
+                        const textWidth = ctx.measureText(label).width;
+                        const bckgDimensions = [
+                            textWidth + fontSize * 0.4,
+                            fontSize + fontSize * 0.2,
+                        ];
+
+                        // Draw background
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+                        ctx.fillRect(
+                            textPos.x - bckgDimensions[0] / 2,
+                            textPos.y - bckgDimensions[1] / 2,
+                            bckgDimensions[0],
+                            bckgDimensions[1],
+                        );
+
+                        // Draw border
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 0.5 / globalScale;
+                        ctx.strokeRect(
+                            textPos.x - bckgDimensions[0] / 2,
+                            textPos.y - bckgDimensions[1] / 2,
+                            bckgDimensions[0],
+                            bckgDimensions[1],
+                        );
+
+                        // Draw text
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(label, textPos.x, textPos.y);
+                    }
+                }}
                 backgroundColor="transparent"
                 cooldownTicks={100}
                 onEngineStop={() => {
