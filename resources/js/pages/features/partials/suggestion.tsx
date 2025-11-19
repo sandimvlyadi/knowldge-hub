@@ -9,10 +9,11 @@ import { Library } from '@/types/library';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { MaximizeIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     record: FeatureDetail;
+    onLibrariesLoaded?: (libraries: Library[]) => void;
 }
 
 interface SuggestionDataProps {
@@ -38,11 +39,17 @@ function useFeatureSuggestionData(key: string) {
 }
 
 export default function FeatureSuggestion(props: Props) {
-    const { record } = props;
+    const { record, onLibrariesLoaded } = props;
     const { data, isLoading, isFetching, error } = useFeatureSuggestionData(
         record.key,
     );
     const [openDialog, setOpenDialog] = useState(false);
+
+    useEffect(() => {
+        if (data?.libraries && onLibrariesLoaded) {
+            onLibrariesLoaded(data.libraries);
+        }
+    }, [data?.libraries, onLibrariesLoaded]);
 
     const toggleDialog = () => {
         setOpenDialog(!openDialog);

@@ -8,11 +8,17 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import features from '@/routes/features';
 import { BreadcrumbItem } from '@/types';
 import { FeatureDetail } from '@/types/feature';
 import { Graph as GraphType } from '@/types/graph';
+import { Library } from '@/types/library';
 import { Head } from '@inertiajs/react';
 import { MaximizeIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -26,6 +32,7 @@ interface Props {
 export default function FeaturesDetail(props: Props) {
     const { record, graph } = props;
     const [openGraphDialog, setOpenGraphDialog] = useState(false);
+    const [suggestedLibraries, setSuggestedLibraries] = useState<Library[]>([]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -40,6 +47,10 @@ export default function FeaturesDetail(props: Props) {
 
     const toggleGraphDialog = () => {
         setOpenGraphDialog(!openGraphDialog);
+    };
+
+    const handleLibrariesLoaded = (libraries: Library[]) => {
+        setSuggestedLibraries(libraries);
     };
 
     return (
@@ -185,7 +196,10 @@ export default function FeaturesDetail(props: Props) {
                         </div>
 
                         {/* Suggestion Section */}
-                        <FeatureSuggestion record={record} />
+                        <FeatureSuggestion
+                            record={record}
+                            onLibrariesLoaded={handleLibrariesLoaded}
+                        />
 
                         {/* Description Section */}
                         <div className="rounded-lg border p-4">
@@ -214,23 +228,58 @@ export default function FeaturesDetail(props: Props) {
                                 Suggested Methods
                             </h4>
                             <div className="prose prose-sm flex max-h-75 max-w-none flex-col gap-2 overflow-auto text-sm font-medium">
-                                {record.libraries.length > 0 ? (
-                                    record.libraries.map((library) => (
+                                {suggestedLibraries.length > 0 ? (
+                                    suggestedLibraries.map((library) => (
                                         <div
                                             className="flex flex-col gap-1 border-b pb-3"
                                             key={`library-${library.name}`}
                                         >
-                                            <a
-                                                href={
-                                                    library.url ||
-                                                    `https://www.google.com/search?q=${library.name}`
-                                                }
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="hover:underline"
-                                            >
-                                                {library.name}
-                                            </a>
+                                            <div className="flex items-center">
+                                                <a
+                                                    href={
+                                                        library.url ||
+                                                        `https://www.google.com/search?q=${library.name}`
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="truncate hover:underline"
+                                                >
+                                                    {library.name}
+                                                </a>
+                                                <div className="ml-auto flex items-center gap-1">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Badge variant="outline">
+                                                                {
+                                                                    library.used_in_issues_count
+                                                                }
+                                                            </Badge>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            Used in{' '}
+                                                            {
+                                                                library.used_in_issues_count
+                                                            }{' '}
+                                                            issues
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Badge variant="outline">
+                                                                {library?.distance?.toFixed(
+                                                                    2,
+                                                                ) || 0}
+                                                            </Badge>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            Distance:{' '}
+                                                            {library?.distance?.toFixed(
+                                                                2,
+                                                            ) || 0}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </div>
+                                            </div>
                                             <div className="text-xs text-muted-foreground">
                                                 {library.description ||
                                                     'No description provided'}
