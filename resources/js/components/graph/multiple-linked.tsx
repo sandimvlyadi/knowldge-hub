@@ -115,24 +115,25 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 });
             }
 
-            // Issue type node
+            // Issue type node - shared across graphs
             if (graphItem.issuetype) {
                 const typeKey = `type-${graphItem.issuetype}`;
-                const typeId = `${typeKey}-${graphIndex}`;
-
-                nodes.push({
-                    id: typeId,
-                    label: graphItem.issuetype,
-                    type: 'issuetype',
-                    val: 12,
-                    color: getNodeColor('issuetype'),
-                    typeDescription: 'Issue Type',
-                });
+                const typeId = `${typeKey}-shared`;
 
                 if (!sharedNodeMap.issuetype[graphItem.issuetype]) {
                     sharedNodeMap.issuetype[graphItem.issuetype] = [];
+                    nodes.push({
+                        id: typeId,
+                        label: graphItem.issuetype,
+                        type: 'issuetype',
+                        val: 12,
+                        color: getNodeColor('issuetype'),
+                        typeDescription: 'Issue Type',
+                    });
                 }
-                sharedNodeMap.issuetype[graphItem.issuetype].push(typeId);
+                sharedNodeMap.issuetype[graphItem.issuetype].push(
+                    `${graphItem.key}-${graphIndex}`,
+                );
 
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -142,24 +143,25 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 });
             }
 
-            // Priority node
+            // Priority node - shared across graphs
             if (graphItem.priority) {
                 const priorityKey = `priority-${graphItem.priority}`;
-                const priorityId = `${priorityKey}-${graphIndex}`;
-
-                nodes.push({
-                    id: priorityId,
-                    label: graphItem.priority,
-                    type: 'priority',
-                    val: 12,
-                    color: getNodeColor('priority'),
-                    typeDescription: 'Priority',
-                });
+                const priorityId = `${priorityKey}-shared`;
 
                 if (!sharedNodeMap.priority[graphItem.priority]) {
                     sharedNodeMap.priority[graphItem.priority] = [];
+                    nodes.push({
+                        id: priorityId,
+                        label: graphItem.priority,
+                        type: 'priority',
+                        val: 12,
+                        color: getNodeColor('priority'),
+                        typeDescription: 'Priority',
+                    });
                 }
-                sharedNodeMap.priority[graphItem.priority].push(priorityId);
+                sharedNodeMap.priority[graphItem.priority].push(
+                    `${graphItem.key}-${graphIndex}`,
+                );
 
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -169,24 +171,25 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 });
             }
 
-            // Status node
+            // Status node - shared across graphs
             if (graphItem.status) {
                 const statusKey = `status-${graphItem.status}`;
-                const statusId = `${statusKey}-${graphIndex}`;
-
-                nodes.push({
-                    id: statusId,
-                    label: graphItem.status,
-                    type: 'status',
-                    val: 12,
-                    color: getNodeColor('status'),
-                    typeDescription: 'Status',
-                });
+                const statusId = `${statusKey}-shared`;
 
                 if (!sharedNodeMap.status[graphItem.status]) {
                     sharedNodeMap.status[graphItem.status] = [];
+                    nodes.push({
+                        id: statusId,
+                        label: graphItem.status,
+                        type: 'status',
+                        val: 12,
+                        color: getNodeColor('status'),
+                        typeDescription: 'Status',
+                    });
                 }
-                sharedNodeMap.status[graphItem.status].push(statusId);
+                sharedNodeMap.status[graphItem.status].push(
+                    `${graphItem.key}-${graphIndex}`,
+                );
 
                 links.push({
                     source: `${graphItem.key}-${graphIndex}`,
@@ -243,21 +246,19 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
 
                 graphItem.components.forEach((component) => {
                     const componentKey = `component-${component}`;
-                    const componentId = `${componentKey}-${graphIndex}`;
-
-                    nodes.push({
-                        id: componentId,
-                        label: component,
-                        type: 'component',
-                        val: 6,
-                        color: getNodeColor('component'),
-                        originalLabel: component,
-                    });
+                    const componentId = `${componentKey}-shared`;
 
                     if (!sharedNodeMap.component[component]) {
                         sharedNodeMap.component[component] = [];
+                        nodes.push({
+                            id: componentId,
+                            label: component,
+                            type: 'component',
+                            val: 6,
+                            color: getNodeColor('component'),
+                            originalLabel: component,
+                        });
                     }
-                    sharedNodeMap.component[component].push(componentId);
 
                     links.push({
                         source: componentsGroupId,
@@ -288,21 +289,19 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 const showMethodLabels = graphItem.methods.length < 10;
                 graphItem.methods.forEach((method) => {
                     const methodKey = `method-${method}`;
-                    const methodId = `${methodKey}-${graphIndex}`;
-
-                    nodes.push({
-                        id: methodId,
-                        label: showMethodLabels ? method : '',
-                        type: 'method',
-                        val: 6,
-                        color: getNodeColor('method'),
-                        originalLabel: method,
-                    });
+                    const methodId = `${methodKey}-shared`;
 
                     if (!sharedNodeMap.method[method]) {
                         sharedNodeMap.method[method] = [];
+                        nodes.push({
+                            id: methodId,
+                            label: showMethodLabels ? method : '',
+                            type: 'method',
+                            val: 6,
+                            color: getNodeColor('method'),
+                            originalLabel: method,
+                        });
                     }
-                    sharedNodeMap.method[method].push(methodId);
 
                     links.push({
                         source: methodsGroupId,
@@ -314,22 +313,8 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
             }
         });
 
-        // Add cross-graph links for shared nodes
-        Object.entries(sharedNodeMap).forEach(([type, nodesByValue]) => {
-            Object.values(nodesByValue).forEach((nodeIds) => {
-                // Link nodes with same value across different graphs
-                if (nodeIds.length > 1) {
-                    for (let i = 0; i < nodeIds.length - 1; i++) {
-                        links.push({
-                            source: nodeIds[i],
-                            target: nodeIds[i + 1],
-                            label: 'same ' + type,
-                            isCrossGraph: true,
-                        });
-                    }
-                }
-            });
-        });
+        // Cross-graph links are now implicit through shared nodes
+        // No need to create separate links between duplicate nodes since they're the same node
 
         setGraphData({ nodes, links });
     }, [data]);
