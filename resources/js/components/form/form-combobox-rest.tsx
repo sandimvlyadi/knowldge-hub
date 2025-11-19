@@ -118,6 +118,8 @@ export function FormComboboxRest({
     const [options, setOptions] = React.useState<ComboboxRestOption[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
+    const [selectedOption, setSelectedOption] =
+        React.useState<ComboboxRestOption | null>(null);
 
     // Gunakan controlled value jika ada, jika tidak gunakan internal state
     const value =
@@ -125,42 +127,118 @@ export function FormComboboxRest({
 
     const hiddenInputRef = React.useRef<HTMLInputElement>(null);
     const abortControllerRef = React.useRef<AbortController | null>(null);
+    const fetchSelectedRef = React.useRef<AbortController | null>(null);
+
+    // Helper functions untuk get label dan value
+    const getOptionLabel = React.useCallback(
+        (option: ComboboxRestOption) => {
+            return labelFormatter ? labelFormatter(option) : option.name;
+        },
+        [labelFormatter],
+    );
+
+    const getOptionValue = React.useCallback(
+        (option: ComboboxRestOption) => {
+            return valueFormatter ? valueFormatter(option) : option.ref_id;
+        },
+        [valueFormatter],
+    );
 
     // Fungsi untuk fetch data dari API
-    const fetchOptions = React.useCallback(async (query: string) => {
-        // Cancel request sebelumnya jika ada
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        abortControllerRef.current = new AbortController();
-        setIsLoading(true);
-
-        try {
-            const params = new URLSearchParams({
-                ...additionalParams,
-                ...(query && { search: query }),
-            });
-
-            const response = await fetch(`${apiUrl}?${params.toString()}`, {
-                signal: abortControllerRef.current.signal,
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch options');
+    const fetchOptions = React.useCallback(
+        async (query: string) => {
+            // Cancel request sebelumnya jika ada
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
             }
 
-            const data: ComboboxRestResponse = await response.json();
-            setOptions(data.data);
-        } catch (error) {
-            if (error instanceof Error && error.name !== 'AbortError') {
-                console.error('Error fetching options:', error);
-                setOptions([]);
+            abortControllerRef.current = new AbortController();
+            setIsLoading(true);
+
+            try {
+                const params = new URLSearchParams({
+                    ...additionalParams,
+                    ...(query && { search: query }),
+                });
+
+                const response = await fetch(`${apiUrl}?${params.toString()}`, {
+                    signal: abortControllerRef.current.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch options');
+                }
+
+                const data: ComboboxRestResponse = await response.json();
+                setOptions(data.data);
+            } catch (error) {
+                if (error instanceof Error && error.name !== 'AbortError') {
+                    console.error('Error fetching options:', error);
+                    setOptions([]);
+                }
+            } finally {
+                setIsLoading(false);
             }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [apiUrl, additionalParams]);
+        },
+        [apiUrl, additionalParams],
+    );
+
+    // Fungsi untuk fetch selected option berdasarkan value
+    const fetchSelectedOption = React.useCallback(
+        async (searchValue: string) => {
+            if (!searchValue) {
+                setSelectedOption(null);
+                return;
+            }
+
+            // Cancel request sebelumnya jika ada
+            if (fetchSelectedRef.current) {
+                fetchSelectedRef.current.abort();
+            }
+
+            fetchSelectedRef.current = new AbortController();
+
+            try {
+                // Cek dulu apakah ada di options yang sudah dimuat
+                const existingOption = options.find(
+                    (opt) => getOptionValue(opt) === searchValue,
+                );
+
+                if (existingOption) {
+                    setSelectedOption(existingOption);
+                    return;
+                }
+
+                // Jika tidak ada, fetch dengan search query
+                const params = new URLSearchParams({
+                    ...additionalParams,
+                    search: searchValue,
+                });
+
+                const response = await fetch(`${apiUrl}?${params.toString()}`, {
+                    signal: fetchSelectedRef.current.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch selected option');
+                }
+
+                const data: ComboboxRestResponse = await response.json();
+                const found = data.data.find(
+                    (opt) => getOptionValue(opt) === searchValue,
+                );
+
+                if (found) {
+                    setSelectedOption(found);
+                }
+            } catch (error) {
+                if (error instanceof Error && error.name !== 'AbortError') {
+                    console.error('Error fetching selected option:', error);
+                }
+            }
+        },
+        [apiUrl, additionalParams, options, getOptionValue],
+    );
 
     // Debounce search query
     React.useEffect(() => {
@@ -184,8 +262,30 @@ export function FormComboboxRest({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Fetch selected option saat value berubah (untuk edit form)
+    React.useEffect(() => {
+        if (value && !selectedOption) {
+            fetchSelectedOption(value);
+        }
+    }, [value, selectedOption, fetchSelectedOption]);
+
+    // Cleanup fetch selected
+    React.useEffect(() => {
+        return () => {
+            if (fetchSelectedRef.current) {
+                fetchSelectedRef.current.abort();
+            }
+        };
+    }, []);
+
     const handleSelect = (selectedValue: string) => {
         const newValue = selectedValue === value ? '' : selectedValue;
+
+        // Simpan selected option
+        const selected = options.find(
+            (option) => getOptionValue(option) === selectedValue,
+        );
+        setSelectedOption(selected || null);
 
         // Update internal state jika tidak controlled
         if (controlledValue === undefined) {
@@ -212,18 +312,10 @@ export function FormComboboxRest({
         }
     };
 
-    // Helper functions untuk get label dan value
-    const getOptionLabel = (option: ComboboxRestOption) => {
-        return labelFormatter ? labelFormatter(option) : option.name;
-    };
-
-    const getOptionValue = (option: ComboboxRestOption) => {
-        return valueFormatter ? valueFormatter(option) : option.ref_id;
-    };
-
-    const selectedOption = options.find(
-        (option) => getOptionValue(option) === value,
-    );
+    // Cari di options saat ini, jika tidak ada gunakan selectedOption yang tersimpan
+    const currentSelectedOption =
+        options.find((option) => getOptionValue(option) === value) ||
+        selectedOption;
 
     return (
         <>
@@ -256,11 +348,11 @@ export function FormComboboxRest({
                         )}
                     >
                         <span className="flex items-center gap-2">
-                            {selectedOption && iconRenderer && (
-                                <>{iconRenderer(selectedOption)}</>
+                            {currentSelectedOption && iconRenderer && (
+                                <>{iconRenderer(currentSelectedOption)}</>
                             )}
-                            {selectedOption
-                                ? getOptionLabel(selectedOption)
+                            {currentSelectedOption
+                                ? getOptionLabel(currentSelectedOption)
                                 : placeholder}
                         </span>
                         <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />

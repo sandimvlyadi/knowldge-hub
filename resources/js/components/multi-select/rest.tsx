@@ -414,6 +414,9 @@ export const MultiSelectRest = React.forwardRef<
             [],
         );
         const [isLoading, setIsLoading] = React.useState(false);
+        const [selectedOptions, setSelectedOptions] = React.useState<
+            MultiSelectRestOption[]
+        >([]);
 
         const selectedValues =
             controlledValue !== undefined ? controlledValue : internalValue;
@@ -426,6 +429,7 @@ export const MultiSelectRest = React.forwardRef<
 
         const hiddenInputRef = React.useRef<HTMLInputElement>(null);
         const abortControllerRef = React.useRef<AbortController | null>(null);
+        const fetchSelectedRef = React.useRef<AbortController | null>(null);
 
         const announce = React.useCallback(
             (message: string, priority: 'polite' | 'assertive' = 'polite') => {
@@ -455,6 +459,21 @@ export const MultiSelectRest = React.forwardRef<
                 return sortedA.every((val, index) => val === sortedB[index]);
             },
             [],
+        );
+
+        // Helper functions untuk get label dan value
+        const getOptionLabel = React.useCallback(
+            (option: MultiSelectRestOption) => {
+                return labelFormatter ? labelFormatter(option) : option.name;
+            },
+            [labelFormatter],
+        );
+
+        const getOptionValue = React.useCallback(
+            (option: MultiSelectRestOption) => {
+                return valueFormatter ? valueFormatter(option) : option.ref_id;
+            },
+            [valueFormatter],
         );
 
         // Fungsi untuk fetch data dari API
@@ -499,6 +518,81 @@ export const MultiSelectRest = React.forwardRef<
             [apiUrl, additionalParams],
         );
 
+        // Fungsi untuk fetch selected options berdasarkan values
+        const fetchSelectedOptions = React.useCallback(
+            async (values: string[]) => {
+                if (values.length === 0) {
+                    setSelectedOptions([]);
+                    return;
+                }
+
+                // Cancel request sebelumnya jika ada
+                if (fetchSelectedRef.current) {
+                    fetchSelectedRef.current.abort();
+                }
+
+                fetchSelectedRef.current = new AbortController();
+
+                try {
+                    // Cek dulu apakah ada di options yang sudah dimuat
+                    const existingOptions = values
+                        .map((value) =>
+                            options.find(
+                                (opt) => getOptionValue(opt) === value,
+                            ),
+                        )
+                        .filter(Boolean) as MultiSelectRestOption[];
+
+                    if (existingOptions.length === values.length) {
+                        setSelectedOptions(existingOptions);
+                        return;
+                    }
+
+                    // Jika tidak semua ada, fetch dengan search query untuk setiap value
+                    const fetchPromises = values.map(async (value) => {
+                        const params = new URLSearchParams({
+                            ...additionalParams,
+                            search: value,
+                        });
+
+                        const response = await fetch(
+                            `${apiUrl}?${params.toString()}`,
+                            {
+                                signal: fetchSelectedRef.current!.signal,
+                            },
+                        );
+
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch selected option');
+                        }
+
+                        const data: MultiSelectRestResponse =
+                            await response.json();
+                        return data.data.find(
+                            (opt) => getOptionValue(opt) === value,
+                        );
+                    });
+
+                    const results = await Promise.all(fetchPromises);
+                    const foundOptions = results.filter(
+                        Boolean,
+                    ) as MultiSelectRestOption[];
+
+                    if (foundOptions.length > 0) {
+                        setSelectedOptions(foundOptions);
+                    }
+                } catch (error) {
+                    if (error instanceof Error && error.name !== 'AbortError') {
+                        console.error(
+                            'Error fetching selected options:',
+                            error,
+                        );
+                    }
+                }
+            },
+            [apiUrl, additionalParams, options, getOptionValue],
+        );
+
         // Debounce search query
         React.useEffect(() => {
             const timer = setTimeout(() => {
@@ -521,14 +615,24 @@ export const MultiSelectRest = React.forwardRef<
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
-        // Helper functions untuk get label dan value
-        const getOptionLabel = (option: MultiSelectRestOption) => {
-            return labelFormatter ? labelFormatter(option) : option.name;
-        };
+        // Fetch selected options saat selectedValues berubah (untuk edit form)
+        React.useEffect(() => {
+            if (
+                selectedValues.length > 0 &&
+                selectedOptions.length !== selectedValues.length
+            ) {
+                fetchSelectedOptions(selectedValues);
+            }
+        }, [selectedValues, selectedOptions.length, fetchSelectedOptions]);
 
-        const getOptionValue = (option: MultiSelectRestOption) => {
-            return valueFormatter ? valueFormatter(option) : option.ref_id;
-        };
+        // Cleanup fetch selected
+        React.useEffect(() => {
+            return () => {
+                if (fetchSelectedRef.current) {
+                    fetchSelectedRef.current.abort();
+                }
+            };
+        }, []);
 
         const resetToDefault = React.useCallback(() => {
             const newValue = defaultValue;
@@ -706,9 +810,18 @@ export const MultiSelectRest = React.forwardRef<
 
         const getOptionByValue = React.useCallback(
             (value: string): MultiSelectRestOption | undefined => {
-                const option = options.find(
+                // Cari di options saat ini terlebih dahulu
+                let option = options.find(
                     (option) => getOptionValue(option) === value,
                 );
+
+                // Jika tidak ada, cari di selectedOptions (untuk edit form)
+                if (!option) {
+                    option = selectedOptions.find(
+                        (option) => getOptionValue(option) === value,
+                    );
+                }
+
                 if (!option && process.env.NODE_ENV === 'development') {
                     console.warn(
                         `MultiSelectRest: Option with value "${value}" not found in options list`,
@@ -716,7 +829,7 @@ export const MultiSelectRest = React.forwardRef<
                 }
                 return option;
             },
-            [options, getOptionValue],
+            [options, selectedOptions, getOptionValue],
         );
 
         const handleInputKeyDown = (
@@ -744,6 +857,22 @@ export const MultiSelectRest = React.forwardRef<
             const newSelectedValues = selectedValues.includes(optionValue)
                 ? selectedValues.filter((value) => value !== optionValue)
                 : [...selectedValues, optionValue];
+
+            // Update selected options
+            if (option) {
+                if (selectedValues.includes(optionValue)) {
+                    // Remove from selected options
+                    setSelectedOptions((prev) =>
+                        prev.filter(
+                            (opt) => getOptionValue(opt) !== optionValue,
+                        ),
+                    );
+                } else {
+                    // Add to selected options
+                    setSelectedOptions((prev) => [...prev, option]);
+                }
+            }
+
             if (controlledValue === undefined) {
                 setInternalValue(newSelectedValues);
             }
@@ -774,6 +903,7 @@ export const MultiSelectRest = React.forwardRef<
             if (controlledValue === undefined) {
                 setInternalValue([]);
             }
+            setSelectedOptions([]);
             onValueChange([]);
         };
 
@@ -803,6 +933,7 @@ export const MultiSelectRest = React.forwardRef<
             if (selectedValues.length === allValues.length) {
                 handleClear();
             } else {
+                setSelectedOptions(allOptions);
                 if (controlledValue === undefined) {
                     setInternalValue(allValues);
                 }
