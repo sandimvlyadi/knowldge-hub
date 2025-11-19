@@ -45,6 +45,23 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { appearance = 'system' } = useAppearance();
     const [showLabels, setShowLabels] = useState(true);
+    const [visibleNodeTypes, setVisibleNodeTypes] = useState<
+        Record<string, boolean>
+    >({
+        issue: true,
+        project: true,
+        reporter: true,
+        issuetype: true,
+        priority: true,
+        status: true,
+        component: true,
+        method: true,
+    });
+
+    const toggleNodeType = (type: string) => {
+        if (type === 'issue') return; // Issue nodes cannot be hidden
+        setVisibleNodeTypes((prev) => ({ ...prev, [type]: !prev[type] }));
+    };
 
     useEffect(() => {
         // Update dimensions on mount and resize
@@ -355,21 +372,66 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
         setGraphData({ nodes, links });
     }, [data]);
 
+    // Filter nodes and links based on visibility
+    const filteredGraphData = {
+        nodes: graphData.nodes.filter((node) => visibleNodeTypes[node.type]),
+        links: graphData.links.filter((link) => {
+            const sourceNode = graphData.nodes.find(
+                (n) =>
+                    n.id ===
+                    (typeof link.source === 'object'
+                        ? (link.source as any).id
+                        : link.source),
+            );
+            const targetNode = graphData.nodes.find(
+                (n) =>
+                    n.id ===
+                    (typeof link.target === 'object'
+                        ? (link.target as any).id
+                        : link.target),
+            );
+            return (
+                sourceNode &&
+                targetNode &&
+                visibleNodeTypes[sourceNode.type] &&
+                visibleNodeTypes[targetNode.type]
+            );
+        }),
+    };
+
     useEffect(() => {
         // Center graph after data is loaded
-        if (graphRef.current && graphData.nodes.length > 0) {
+        if (graphRef.current && filteredGraphData.nodes.length > 0) {
             setTimeout(() => {
                 graphRef.current?.zoomToFit(400, 50);
             }, 100);
         }
-    }, [graphData]);
+    }, [filteredGraphData]);
 
     return (
         <div ref={containerRef} className="relative h-full w-full">
             <div className="absolute z-10 flex flex-col gap-2">
                 <div className="flex flex-col gap-1 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md hover:opacity-75 dark:bg-slate-600">
                     {Object.entries(NODE_COLORS).map(([type, config]) => (
-                        <div key={type} className="flex items-center gap-1">
+                        <button
+                            key={type}
+                            onClick={() => toggleNodeType(type)}
+                            className={`flex items-center gap-1 text-left transition-opacity ${
+                                type === 'issue'
+                                    ? 'cursor-default'
+                                    : 'cursor-pointer hover:opacity-80'
+                            } ${
+                                !visibleNodeTypes[type]
+                                    ? 'line-through opacity-30'
+                                    : ''
+                            }`}
+                            disabled={type === 'issue'}
+                            title={
+                                type === 'issue'
+                                    ? 'Issue nodes cannot be hidden'
+                                    : `Click to ${visibleNodeTypes[type] ? 'hide' : 'show'} ${config.label}`
+                            }
+                        >
                             <SquareIcon
                                 fill={config.color}
                                 stroke={config.color}
@@ -378,7 +440,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                             <span className="font-semibold">
                                 {config.label}
                             </span>
-                        </div>
+                        </button>
                     ))}
                 </div>
                 <button
@@ -398,7 +460,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
             </div>
             <ForceGraph2D
                 ref={graphRef}
-                graphData={graphData}
+                graphData={filteredGraphData}
                 width={dimensions.width}
                 height={dimensions.height}
                 nodeLabel={(node: any) => {
