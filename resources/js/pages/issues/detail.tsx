@@ -232,7 +232,7 @@ export default function IssuesDetail(props: Props) {
                                             >
                                                 {library.name}
                                             </a>
-                                            <div className="text-xs text-muted-foreground">
+                                            <div className="line-clamp-3 text-justify text-xs whitespace-normal whitespace-pre-wrap text-muted-foreground">
                                                 {library.description ||
                                                     'No description provided'}
                                             </div>

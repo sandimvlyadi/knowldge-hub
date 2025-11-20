@@ -280,7 +280,7 @@ export default function FeaturesDetail(props: Props) {
                                                     </Tooltip>
                                                 </div>
                                             </div>
-                                            <div className="text-xs text-muted-foreground">
+                                            <div className="line-clamp-3 text-justify text-xs whitespace-normal whitespace-pre-wrap text-muted-foreground">
                                                 {library.description ||
                                                     'No description provided'}
                                             </div>

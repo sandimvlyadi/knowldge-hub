@@ -48,7 +48,9 @@ export const createColumns = (
         cell: ({ row }) => {
             const record = row.original;
             return record.description ? (
-                record.description
+                <span className="line-clamp-5 max-w-xs text-start whitespace-normal">
+                    {record.description}
+                </span>
             ) : (
                 <div className="text-muted-foreground">
                     No description provided
