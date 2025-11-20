@@ -45,6 +45,7 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { appearance = 'system' } = useAppearance();
     const [showLabels, setShowLabels] = useState(true);
+    const [hideEmptyMethods, setHideEmptyMethods] = useState(false);
     const [visibleNodeTypes, setVisibleNodeTypes] = useState<
         Record<string, boolean>
     >({
@@ -104,12 +105,12 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
         );
 
         data.forEach((graphItem, graphIndex) => {
-            // Calculate opacity based on distance (0 distance = 100% opacity, max distance = lower opacity)
+            // Calculate opacity based on distance (0 distance = 100% opacity, higher distance = lower opacity)
             // First graph (index 0) always has 100% opacity
             const opacity =
                 graphIndex === 0 || graphItem.distance === undefined
                     ? 1.0
-                    : Math.max(0.3, 1 - graphItem.distance / maxDistance);
+                    : Math.max(0.1, 1 - graphItem.distance);
 
             // Central issue node for each graph
             nodes.push({
@@ -373,8 +374,31 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
     }, [data]);
 
     // Filter nodes and links based on visibility
+    const shouldHideNode = (node: Node) => {
+        if (!visibleNodeTypes[node.type]) return true;
+
+        // Hide issue nodes with empty methods (except first graph or nodes without method parameter)
+        if (
+            hideEmptyMethods &&
+            node.type === 'issue' &&
+            node.graphIndex !== undefined &&
+            node.graphIndex > 0
+        ) {
+            const graphItem = data[node.graphIndex];
+            if (
+                graphItem &&
+                graphItem.methods !== undefined &&
+                graphItem.methods.length === 0
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const filteredGraphData = {
-        nodes: graphData.nodes.filter((node) => visibleNodeTypes[node.type]),
+        nodes: graphData.nodes.filter((node) => !shouldHideNode(node)),
         links: graphData.links.filter((link) => {
             const sourceNode = graphData.nodes.find(
                 (n) =>
@@ -390,11 +414,13 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                         ? (link.target as any).id
                         : link.target),
             );
+
+            // Hide link if either source or target node should be hidden
             return (
                 sourceNode &&
                 targetNode &&
-                visibleNodeTypes[sourceNode.type] &&
-                visibleNodeTypes[targetNode.type]
+                !shouldHideNode(sourceNode) &&
+                !shouldHideNode(targetNode)
             );
         }),
     };
@@ -446,15 +472,31 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 <button
                     onClick={() => setShowLabels(!showLabels)}
                     className="flex items-center gap-2 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md transition-opacity hover:opacity-75 dark:bg-slate-600"
-                    title={showLabels ? 'Hide labels' : 'Show labels'}
+                    title={'Show labels'}
                 >
                     {showLabels ? (
                         <EyeIcon className="h-4 w-4" />
                     ) : (
                         <EyeOffIcon className="h-4 w-4" />
                     )}
+                    <span className="font-semibold">{'Show Labels'}</span>
+                </button>
+                <button
+                    onClick={() => setHideEmptyMethods(!hideEmptyMethods)}
+                    className="flex items-center gap-2 rounded-md border bg-slate-800 p-2 text-xs text-white opacity-25 shadow-md transition-opacity hover:opacity-75 dark:bg-slate-600"
+                    title={
+                        hideEmptyMethods
+                            ? 'Show issues with empty methods'
+                            : 'Hide issues with empty methods'
+                    }
+                >
+                    {hideEmptyMethods ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                        <EyeIcon className="h-4 w-4" />
+                    )}
                     <span className="font-semibold">
-                        {showLabels ? 'Hide Labels' : 'Show Labels'}
+                        {'Show Empty Methods'}
                     </span>
                 </button>
             </div>
