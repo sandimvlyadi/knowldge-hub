@@ -68,7 +68,7 @@ export default function FeatureSuggestion(props: Props) {
         if (data?.libraries && onLibrariesLoaded) {
             onLibrariesLoaded(data.libraries);
         }
-    }, [data?.libraries, onLibrariesLoaded]);
+    }, [data, acrossProjects]);
 
     const toggleDialog = () => {
         setOpenDialog(!openDialog);

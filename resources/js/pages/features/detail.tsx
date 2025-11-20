@@ -225,64 +225,87 @@ export default function FeaturesDetail(props: Props) {
                         {/* Method Section */}
                         <div className="mb-6 rounded-lg border p-4">
                             <h4 className="mb-4 text-lg font-semibold">
-                                Suggested Methods
+                                Suggested Methods ({suggestedLibraries.length})
                             </h4>
                             <div className="prose prose-sm flex max-h-75 max-w-none flex-col gap-2 overflow-auto text-sm font-medium">
                                 {suggestedLibraries.length > 0 ? (
-                                    suggestedLibraries.map((library) => (
+                                    suggestedLibraries.map((library, index) => (
                                         <div
-                                            className="flex flex-col gap-1 border-b pb-3"
-                                            key={`library-${library.name}`}
+                                            key={`suggested-library-${index}`}
+                                            className="flex items-start gap-2"
                                         >
-                                            <div className="flex items-center">
-                                                <a
-                                                    href={
-                                                        library.url ||
-                                                        `https://www.google.com/search?q=${library.name}`
-                                                    }
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="truncate hover:underline"
-                                                >
-                                                    {library.name}
-                                                </a>
-                                                <div className="ml-auto flex items-center gap-1">
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Badge variant="outline">
+                                            <div
+                                                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-green-600 font-semibold text-white"
+                                                style={{
+                                                    opacity: Math.max(
+                                                        0.1,
+                                                        1 - library?.distance!,
+                                                    ),
+                                                }}
+                                            >
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex w-full flex-col gap-1 border-b pb-3">
+                                                <div className="flex items-center">
+                                                    <a
+                                                        href={
+                                                            library.url ||
+                                                            `https://www.google.com/search?q=${library.name}`
+                                                        }
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="hover:underline"
+                                                    >
+                                                        {library.name.length >
+                                                        32
+                                                            ? `${library.name.substring(
+                                                                  0,
+                                                                  32,
+                                                              )}...`
+                                                            : library.name}
+                                                    </a>
+                                                    <div className="ml-auto flex items-center gap-1">
+                                                        <Tooltip>
+                                                            <TooltipTrigger
+                                                                asChild
+                                                            >
+                                                                <Badge variant="outline">
+                                                                    {
+                                                                        library.used_in_issues_count
+                                                                    }
+                                                                </Badge>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                Used in{' '}
                                                                 {
                                                                     library.used_in_issues_count
-                                                                }
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            Used in{' '}
-                                                            {
-                                                                library.used_in_issues_count
-                                                            }{' '}
-                                                            issues
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Badge variant="outline">
+                                                                }{' '}
+                                                                issues
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                        <Tooltip>
+                                                            <TooltipTrigger
+                                                                asChild
+                                                            >
+                                                                <Badge variant="outline">
+                                                                    {library?.distance?.toFixed(
+                                                                        2,
+                                                                    ) || 0}
+                                                                </Badge>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                Distance:{' '}
                                                                 {library?.distance?.toFixed(
                                                                     2,
                                                                 ) || 0}
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            Distance:{' '}
-                                                            {library?.distance?.toFixed(
-                                                                2,
-                                                            ) || 0}
-                                                        </TooltipContent>
-                                                    </Tooltip>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="line-clamp-3 text-justify text-xs whitespace-normal whitespace-pre-wrap text-muted-foreground">
-                                                {library.description ||
-                                                    'No description provided'}
+                                                <div className="line-clamp-3 text-justify text-xs whitespace-normal whitespace-pre-wrap text-muted-foreground">
+                                                    {library.description ||
+                                                        'No description provided'}
+                                                </div>
                                             </div>
                                         </div>
                                     ))
