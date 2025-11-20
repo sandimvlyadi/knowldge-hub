@@ -16,7 +16,12 @@ import { Library } from '@/types/library';
 import { Link } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { LocateFixedIcon, LocateIcon, MaximizeIcon } from 'lucide-react';
+import {
+    LocateFixedIcon,
+    LocateIcon,
+    MaximizeIcon,
+    RefreshCwIcon,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -59,10 +64,8 @@ export default function FeatureSuggestion(props: Props) {
     const [openDialog, setOpenDialog] = useState(false);
     const [acrossProjects, setAcrossProjects] = useState(false);
 
-    const { data, isLoading, isFetching, error } = useFeatureSuggestionData(
-        record.key,
-        acrossProjects,
-    );
+    const { data, isLoading, isFetching, error, refetch } =
+        useFeatureSuggestionData(record.key, acrossProjects);
 
     useEffect(() => {
         if (data?.libraries && onLibrariesLoaded) {
@@ -100,7 +103,15 @@ export default function FeatureSuggestion(props: Props) {
             <div className="mb-6 rounded-lg border p-4">
                 <h4 className="mb-4 text-lg font-semibold">Suggestion</h4>
                 <div className="text-sm text-red-600">
-                    Failed to load suggestion data.
+                    Failed to load suggestion data.{' '}
+                    <span
+                        className="cursor-pointer font-semibold text-blue-600 hover:underline"
+                        onClick={() => {
+                            refetch();
+                        }}
+                    >
+                        Reload <RefreshCwIcon className="inline h-3 w-3" />
+                    </span>
                 </div>
             </div>
         );
