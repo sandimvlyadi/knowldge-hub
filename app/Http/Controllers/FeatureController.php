@@ -340,8 +340,10 @@ class FeatureController extends Controller
         return response()->json(['key' => $key], 200);
     }
 
-    public function suggestion($key): JsonResponse
+    public function suggestion($key, Request $request): JsonResponse
     {
+        $acrossProjects = $request->input('across_projects', 'false');
+
         $record = Feature::with([
             'project',
             'issueType',
@@ -363,15 +365,19 @@ class FeatureController extends Controller
         $description = "{$record->summary}. ".($record->description ?? '');
         $description = trim($description);
 
+        $where = null;
+        if ($acrossProjects !== true && $acrossProjects !== 'true') {
+            $where = [
+                'project' => $record->project?->ref_id,
+            ];
+        }
         $res = $chromadb->items()->queryWithText(
             collectionId: $collectionId,
             queryText: $description,
             embeddingFunction: $embedder,
             nResults: 10,
             include: ['documents', 'metadatas', 'distances'],
-            where: [
-                'project' => $record->project?->ref_id,
-            ]
+            where: $where,
         );
 
         if ($res->failed()) {
