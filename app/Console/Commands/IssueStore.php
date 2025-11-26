@@ -188,13 +188,19 @@ class IssueStore extends Command
                 'ref_reporter_key' => $reporter->key,
             ];
 
-            $issue = Issue::updateOrCreate(
-                [
-                    'ref_id' => $validated['ref_id'],
-                    'key' => $validated['key'],
-                ],
-                $validated
-            );
+            try {
+                $issue = Issue::updateOrCreate(
+                    [
+                        'ref_id' => $validated['ref_id'],
+                        'key' => $validated['key'],
+                    ],
+                    $validated
+                );
+            } catch (\Exception $e) {
+                $this->error("Failed to process {$validated['key']}: {$e->getMessage()}");
+
+                continue;
+            }
         }
     }
 }
