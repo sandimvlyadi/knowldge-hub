@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('key')->unique();
             $table->string('url');
             $table->text('summary')->nullable();
-            $table->text('description')->nullable();
+            $table->longText('description')->nullable();
             $table->text('components')->nullable();
             $table->timestamp('created')->nullable();
             $table->string('ref_project_id');
