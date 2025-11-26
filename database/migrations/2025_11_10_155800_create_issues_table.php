@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('components')->nullable();
             $table->timestamp('created')->nullable();
-            $table->string('ref_status_id');
+            $table->string('ref_project_id');
             $table->foreign('ref_project_id')->references('ref_id')->on('master_projects');
             $table->string('ref_issue_type_id');
             $table->foreign('ref_issue_type_id')->references('ref_id')->on('master_issue_types');
