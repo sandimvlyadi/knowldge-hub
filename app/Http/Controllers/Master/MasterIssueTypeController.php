@@ -42,9 +42,8 @@ class MasterIssueTypeController extends Controller
      */
     public function store(StoreMasterIssueTypeRequest $request): JsonResponse
     {
-        // Check if there's a soft-deleted record with same ref_id or key
+        // Check if there's a soft-deleted record with same ref_id
         $existingByRefId = MasterIssueType::withTrashed()->where('ref_id', $request->ref_id)->first();
-        $existingByKey = MasterIssueType::withTrashed()->where('key', $request->key)->first();
 
         // If soft-deleted record exists, restore and update it
         if ($existingByRefId && $existingByRefId->trashed()) {
@@ -53,14 +52,6 @@ class MasterIssueTypeController extends Controller
             $existingByRefId->update($request->validated());
 
             return response()->json($existingByRefId, 200);
-        }
-
-        if ($existingByKey && $existingByKey->trashed()) {
-            $existingByKey->restore();
-            $existingByKey->deleted_by = null; // Reset deleted_by
-            $existingByKey->update($request->validated());
-
-            return response()->json($existingByKey, 200);
         }
 
         // Otherwise create new record
