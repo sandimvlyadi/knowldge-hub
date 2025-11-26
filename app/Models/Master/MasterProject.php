@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\Issue;
 use App\Traits\Blameable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,4 +35,9 @@ class MasterProject extends Model
     protected $casts = [
         'archived' => 'boolean',
     ];
+
+    public function issues()
+    {
+        return $this->hasMany(Issue::class, 'ref_project_id', 'ref_id');
+    }
 }

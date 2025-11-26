@@ -162,36 +162,36 @@ export const createColumns = (
             );
         },
     },
-    {
-        accessorKey: 'methods',
-        header: 'Methods',
-        cell: ({ row }) => {
-            const libraries = row.original.libraries;
+    // {
+    //     accessorKey: 'methods',
+    //     header: 'Methods',
+    //     cell: ({ row }) => {
+    //         const libraries = row.original.libraries;
 
-            return (
-                <Tooltip>
-                    <TooltipTrigger>
-                        <Badge variant="outline">
-                            {libraries.length} method
-                            {libraries.length !== 1 ? 's' : ''}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <div className="flex max-w-sm flex-col gap-2">
-                            {libraries.map((library, index) => (
-                                <div key={index} className="flex flex-col">
-                                    <span>{library.name}</span>
-                                    <span className="text-sm text-muted-foreground">
-                                        {library.description}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </TooltipContent>
-                </Tooltip>
-            );
-        },
-    },
+    //         return (
+    //             <Tooltip>
+    //                 <TooltipTrigger>
+    //                     <Badge variant="outline">
+    //                         {libraries.length} method
+    //                         {libraries.length !== 1 ? 's' : ''}
+    //                     </Badge>
+    //                 </TooltipTrigger>
+    //                 <TooltipContent>
+    //                     <div className="flex max-w-sm flex-col gap-2">
+    //                         {libraries.map((library, index) => (
+    //                             <div key={index} className="flex flex-col">
+    //                                 <span>{library.name}</span>
+    //                                 <span className="text-sm text-muted-foreground">
+    //                                     {library.description}
+    //                                 </span>
+    //                             </div>
+    //                         ))}
+    //                     </div>
+    //                 </TooltipContent>
+    //             </Tooltip>
+    //         );
+    //     },
+    // },
     {
         accessorKey: 'created',
         header: 'Created',
