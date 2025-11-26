@@ -20,10 +20,14 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('components')->nullable();
             $table->timestamp('created')->nullable();
-            $table->foreignId('ref_project_id')->constrained('master_projects', 'ref_id');
-            $table->foreignId('ref_issue_type_id')->constrained('master_issue_types', 'ref_id');
-            $table->foreignId('ref_priority_id')->constrained('master_priorities', 'ref_id');
-            $table->foreignId('ref_status_id')->constrained('master_statuses', 'ref_id');
+            $table->string('ref_status_id');
+            $table->foreign('ref_project_id')->references('ref_id')->on('master_projects');
+            $table->string('ref_issue_type_id');
+            $table->foreign('ref_issue_type_id')->references('ref_id')->on('master_issue_types');
+            $table->string('ref_priority_id');
+            $table->foreign('ref_priority_id')->references('ref_id')->on('master_priorities');
+            $table->string('ref_status_id');
+            $table->foreign('ref_status_id')->references('ref_id')->on('master_statuses');
             $table->string('ref_reporter_key');
             $table->foreign('ref_reporter_key')->references('key')->on('master_reporters');
             $table->foreignId('created_by')->nullable()->constrained('users');

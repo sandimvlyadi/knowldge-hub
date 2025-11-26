@@ -17,7 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('icon_url');
             $table->text('description')->nullable();
-            $table->foreignId('ref_status_category_id')->nullable()->constrained('master_status_categories', 'ref_id');
+            $table->string('ref_status_category_id')->nullable();
+            $table->foreign('ref_status_category_id')->references('ref_id')->on('master_status_categories');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
