@@ -9,6 +9,7 @@ use App\Models\Master\MasterProject;
 use App\Models\Master\MasterReporter;
 use App\Models\Master\MasterStatus;
 use App\Models\Master\MasterStatusCategory;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Storage;
 
@@ -179,7 +180,7 @@ class IssueStore extends Command
                 'summary' => $data['fields']['summary'] ?? null,
                 'description' => $data['fields']['description'] ?? null,
                 'components' => $componentImploded,
-                'created' => $data['fields']['created'] ?? null,
+                'created' => Carbon::parse($data['fields']['created']) ?? null,
                 'ref_project_id' => $project->ref_id,
                 'ref_issue_type_id' => $issueType->ref_id,
                 'ref_priority_id' => $priority->ref_id,
