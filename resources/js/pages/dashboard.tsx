@@ -1,6 +1,10 @@
+import { ChartFeaturesByStatus } from '@/components/chart/chart-features-by-status';
 import { ChartIssueByProject } from '@/components/chart/chart-issue-by-project';
+import { ChartIssuesByPriority } from '@/components/chart/chart-issues-by-priority';
+import { ChartIssuesByStatus } from '@/components/chart/chart-issues-by-status';
 import { ChartLibraries } from '@/components/chart/chart-libraries';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { ChartTopLibraries } from '@/components/chart/chart-top-libraries';
+import { StatsCards } from '@/components/dashboard/stats-cards';
 import AppLayout from '@/layouts/app-layout';
 import { thousand } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -15,6 +19,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface Props {
+    overview: {
+        total_features: number;
+        total_issues: number;
+        total_libraries: number;
+        total_projects: number;
+    };
     count: {
         library: {
             library_with_description: number;
@@ -28,11 +38,27 @@ interface Props {
             issue_vectorized: number;
             issue_all: number;
         }[];
+        issue_by_status: {
+            status: string;
+            count: number;
+        }[];
+        issue_by_priority: {
+            priority: string;
+            count: number;
+        }[];
+        feature_by_status: {
+            status: string;
+            count: number;
+        }[];
+        top_libraries: {
+            name: string;
+            count: number;
+        }[];
     };
 }
 
 export default function Dashboard(props: Props) {
-    const { count } = props;
+    const { count, overview } = props;
 
     const totalIssues = count.issue_by_project.reduce(
         (acc, item) => acc + item.issue_all,
@@ -67,6 +93,12 @@ export default function Dashboard(props: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                {/* Stats Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatsCards overview={overview} />
+                </div>
+
+                {/* First Row - Issues and Libraries Overview */}
                 <div className="grid auto-rows-min gap-4 lg:grid-cols-2">
                     <ChartIssueByProject
                         data={dataIssueByProject}
@@ -77,8 +109,17 @@ export default function Dashboard(props: Props) {
                         description={`We collect ${thousand(count.library.library_all)} methods from various libraries`}
                     />
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+
+                {/* Second Row - Issues and Features by Status */}
+                <div className="grid auto-rows-min gap-4 lg:grid-cols-2">
+                    <ChartIssuesByStatus data={count.issue_by_status} />
+                    <ChartFeaturesByStatus data={count.feature_by_status} />
+                </div>
+
+                {/* Third Row - Issues by Priority and Top Libraries */}
+                <div className="grid auto-rows-min gap-4 lg:grid-cols-2">
+                    <ChartIssuesByPriority data={count.issue_by_priority} />
+                    <ChartTopLibraries data={count.top_libraries} />
                 </div>
             </div>
         </AppLayout>
