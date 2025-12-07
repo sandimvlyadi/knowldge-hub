@@ -627,16 +627,16 @@ export function MultipleLinkedGraph({ data }: MultipleLinkedGraphProps) {
                 linkWidth={2}
                 linkLineDash={(link: any) =>
                     link.distance !== undefined
-                        ? [10, 5]
+                        ? null
                         : link.isCrossGraph
                           ? [5, 5]
                           : null
                 }
                 linkDirectionalParticles={(link: any) =>
-                    link.distance !== undefined ? 6 : link.isCrossGraph ? 4 : 2
+                    link.distance !== undefined ? 2 : link.isCrossGraph ? 4 : 2
                 }
                 linkDirectionalParticleWidth={(link: any) =>
-                    link.distance !== undefined ? 4 : link.isCrossGraph ? 3 : 2
+                    link.distance !== undefined ? 2 : link.isCrossGraph ? 3 : 2
                 }
                 linkDirectionalParticleColor={(link: any) =>
                     link.distance !== undefined
