@@ -228,7 +228,7 @@ export default function Chat() {
                                         className={`p-3 ${
                                             message.type === 'user'
                                                 ? 'bg-teal-600 text-white'
-                                                : 'bg-gray-100'
+                                                : 'bg-gray-100 dark:bg-gray-600'
                                         }`}
                                     >
                                         <p className="text-sm whitespace-pre-wrap">
@@ -312,7 +312,7 @@ export default function Chat() {
                         <Button
                             onClick={sendMessage}
                             disabled={!inputValue.trim() || isLoading}
-                            className="cursor-pointer bg-teal-600 hover:bg-teal-700"
+                            className="cursor-pointer bg-teal-600 text-white hover:bg-teal-700"
                         >
                             <SendIcon className="h-4 w-4" />
                         </Button>
